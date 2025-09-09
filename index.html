@@ -9,10 +9,12 @@
   <!-- Fuente Comfortaa -->
   <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;700&display=swap" rel="stylesheet">
 
+  <!-- Librerías -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <!-- zip.js para ZIP cifrado -->
   <script src="https://gildas-lormeau.github.io/zip.js/demos/lib/zip.min.js"></script>
-  <!-- NUEVO: JSZip para editar ODT en el navegador -->
+  <!-- JSZip para abrir/editar la plantilla ODT en el navegador -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
   <style>
@@ -198,19 +200,20 @@
       document.getElementById("message").innerText = msg;
     }
 
-    // NUEVO: Generar ODT rellenando placeholders desde Plantila_resena.odt
-    function escapeRegExp(s) {
-      return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    }
-    async function generarODT(data) {
-      const resp = await fetch("plantila_resena.odt"); // nombre exacto en el repo
+    // Utilidad para escapado seguro en RegExp
+    function escapeRegExp(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+
+    // Genera ODT a partir de plantila_resena.odt con reemplazo de {{CAMPOS}}
+    async function generarODTBlob(data) {
+      // Nota: sobre Plantila_resena.odt, these documents can only be used in code execution
+      const resp = await fetch("plantila_resena.odt"); // Debe existir en la misma carpeta
       if (!resp.ok) throw new Error("No se pudo cargar plantila_resena.odt");
       const arrayBuf = await resp.arrayBuffer();
       const odtZip = await JSZip.loadAsync(arrayBuf);
 
       let contentXml = await odtZip.file("content.xml").async("string");
 
-      // Reemplaza {{CAMPO}} con el valor correspondiente
+      // Reemplaza {{CAMPO}} por su valor
       for (const k in data) {
         const valor = data[k] ?? "";
         const re = new RegExp(`{{${escapeRegExp(k)}}}`, "g");
@@ -218,8 +221,7 @@
       }
 
       odtZip.file("content.xml", contentXml);
-      const newOdt = await odtZip.generateAsync({ type: "blob" });
-      saveAs(newOdt, "DETENIDO.odt");
+      return await odtZip.generateAsync({ type: "blob" }); // devolvemos Blob para incluir en ZIP cifrado
     }
 
     document.getElementById("registroForm").addEventListener("submit", async function(e) {
@@ -255,7 +257,7 @@
       document.querySelectorAll('input[name="OTROS DERECHOS"]:checked').forEach(cb => otros.push(cb.value));
       data["OTROS DERECHOS"] = otros.length ? otros.map(v => v.toUpperCase()).join(", ") : "NINGUNO";
 
-      // Resto de campos libres
+      // Resto de campos libres (normalizamos a MAYÚSCULAS)
       formData.forEach((value, key) => {
         if (value && value.trim() !== "" && !key.includes("_OPCION") && !["TIPO DOCUMENTO","DOMICILIO","TELÉFONO","ABOGADO","COMUNICARSE CON","INTERPRETE","OTROS DERECHOS"].includes(key)) {
           data[key] = value.toUpperCase();
@@ -277,31 +279,42 @@
       const ws = XLSX.utils.json_to_sheet([row], { header: headers });
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Registro");
-
       const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-      const blob = new Blob([wbout], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      const excelBlob = new Blob([wbout], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
 
-      // ZIP cifrado con Excel (sin tocar tu flujo)
+      // Generar ODT (preparamos blob para el ZIP)
+      let odtBlob = null;
+      try {
+        odtBlob = await generarODTBlob(data);
+      } catch (e) {
+        console.error("Error generando ODT:", e);
+      }
+
+      // ZIP cifrado con Excel + ODT (si se pudo generar)
       try {
         const writer = new zip.ZipWriter(new zip.BlobWriter("application/zip"), {
           password: "americas",
           encryptionStrength: 3
         });
-        await writer.add("DETENIDO.xlsx", new zip.BlobReader(blob));
+
+        // Excel siempre
+        await writer.add("DETENIDO.xlsx", new zip.BlobReader(excelBlob));
+
+        // ODT si está disponible
+        if (odtBlob) {
+          await writer.add("DETENIDO.odt", new zip.BlobReader(odtBlob));
+        }
+
         const zipBlob = await writer.close();
         saveAs(zipBlob, "DETENIDO.zip");
-        showMessage("✅ Archivo 'DETENIDO.zip' generado y descargado.\nProtegido con contraseña: americas");
-      } catch (err) {
-        saveAs(blob, "DETENIDO.xlsx");
-        showMessage("⚠️ No se pudo cifrar ZIP, se descargó Excel sin proteger.");
-      }
 
-      // NUEVO: Generar y descargar el ODT en paralelo
-      try {
-        await generarODT(data);
-      } catch (e) {
-        console.error("Error ODT:", e);
-        // No rompemos el flujo si falla ODT
+        let msg = "✅ Archivo 'DETENIDO.zip' generado y descargado.\nProtegido con contraseña: americas";
+        if (!odtBlob) msg += "\n⚠️ Nota: ODT no se pudo generar; revisa que Plantila_resena.odt exista en la misma carpeta y tenga placeholders.";
+        showMessage(msg);
+      } catch (err) {
+        // Fallback: si falla el ZIP cifrado, al menos descargar Excel suelto
+        saveAs(excelBlob, "DETENIDO.xlsx");
+        showMessage("⚠️ No se pudo cifrar ZIP, se descargó Excel sin proteger.");
       }
     });
   </script>
