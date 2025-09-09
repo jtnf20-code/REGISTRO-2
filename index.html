@@ -1,412 +1,309 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro de Detenidos</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        h1 {
-            color: #2c3e50;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #34495e;
-        }
-        input, select, textarea {
-            width: 100%;
-            padding: 10px;
-            border: 2px solid #ddd;
-            border-radius: 5px;
-            font-size: 16px;
-            box-sizing: border-box;
-        }
-        input:focus, select:focus, textarea:focus {
-            border-color: #3498db;
-            outline: none;
-        }
-        textarea {
-            height: 80px;
-            resize: vertical;
-        }
-        .row {
-            display: flex;
-            gap: 15px;
-        }
-        .col {
-            flex: 1;
-        }
-        button {
-            background: #27ae60;
-            color: white;
-            padding: 15px 30px;
-            border: none;
-            border-radius: 5px;
-            font-size: 18px;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 20px;
-        }
-        button:hover {
-            background: #219a52;
-        }
-        .message {
-            margin-top: 15px;
-            padding: 10px;
-            border-radius: 5px;
-            text-align: center;
-        }
-        .success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        .error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Registro de Detenidos</title>
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Fuente Comfortaa -->
+  <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;700&display=swap" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <script src="https://gildas-lormeau.github.io/zip.js/demos/lib/zip.min.js"></script>
+  <!-- NUEVO: JSZip para editar ODT en el navegador -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Comfortaa', sans-serif; 
+      margin: 20px;
+      background: #f4f4f9;
+    }
+    h1 { 
+      text-align: center; 
+      text-transform: uppercase;
+      color: #2c3e50;
+      font-size: 2.2em;
+      margin-bottom: 30px;
+    }
+    form {
+      background: url('fondo.jpg') center/cover no-repeat;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.4);
+      max-width: 650px;
+      margin: auto;
+    }
+    label { 
+      display: block; 
+      margin-top: 15px; 
+      text-transform: uppercase;
+      color: #ffffff;
+      font-size: 1.1em;
+    }
+    input, select, textarea { 
+      width: 100%; 
+      padding: 10px; 
+      margin-top: 6px; 
+      font-family: 'Comfortaa', sans-serif;
+      font-weight: 400;
+      border: 2px solid #ffffff80;
+      border-radius: 5px;
+      background-color: rgba(255,255,255,0.9);
+      font-size: 14px;
+      color: #000;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: #3498db;
+      outline: none;
+    }
+    button { 
+      margin-top: 25px; 
+      padding: 12px; 
+      background: #3498db; 
+      color: white;
+      border: none; 
+      border-radius: 8px; 
+      cursor: pointer; 
+      width: 100%;
+      font-family: 'Comfortaa', sans-serif;
+      font-weight: 700;
+      font-size: 16px;
+      text-transform: uppercase;
+    }
+    button:hover { background: #2980b9; }
+    #message { 
+      margin-top: 20px; 
+      font-weight: bold; 
+      text-align: center; 
+      white-space: pre-line;
+    }
+    .checkbox-group { margin-top: 8px; margin-left: 10px; }
+    .checkbox-group label {
+      display: flex; align-items: center; margin-top: 8px;
+      font-size: 1em; text-transform: none; color: #ffffff;
+    }
+    .checkbox-group input[type="checkbox"] {
+      width: auto; margin-right: 10px; margin-top: 0; transform: scale(1.2);
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>📋 Registro de Detenidos</h1>
-        
-        <form id="registroForm">
-            <div class="row">
-                <div class="col">
-                    <div class="form-group">
-                        <label for="tipoDocumento">Tipo Documento:</label>
-                        <select id="tipoDocumento" name="TIPO DOCUMENTO" required>
-                            <option value="">Seleccionar...</option>
-                            <option value="DNI">DNI</option>
-                            <option value="NIE">NIE</option>
-                            <option value="Pasaporte">Pasaporte</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="form-group">
-                        <label for="numeroDocumento">Nº Documento:</label>
-                        <input type="text" id="numeroDocumento" name="NºDOCUMENTO" required>
-                    </div>
-                </div>
-            </div>
+  <h1>Registro de Detenidos</h1>
+  <form id="registroForm">
+    <label>TIPO DOCUMENTO:
+      <select name="TIPO DOCUMENTO_OPCION">
+        <option value="DNI" selected>DNI</option>
+        <option value="NIE">NIE</option>
+        <option value="INDOCUMENTADO">INDOCUMENTADO</option>
+        <option value="OTRO">OTRO</option>
+      </select>
+      <input type="text" name="TIPO DOCUMENTO" placeholder="Especificar otro" style="display:none;">
+    </label>
 
-            <div class="row">
-                <div class="col">
-                    <div class="form-group">
-                        <label for="nombre">Nombre:</label>
-                        <input type="text" id="nombre" name="Nombre" required>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="form-group">
-                        <label for="apellidos">Apellidos:</label>
-                        <input type="text" id="apellidos" name="APELLIDOS" required>
-                    </div>
-                </div>
-            </div>
+    <label>NºDOCUMENTO: <input type="text" name="NºDOCUMENTO"></label>
+    <label>SEXO:
+      <select name="SEXO_OPCION">
+        <option value="MASCULINO" selected>MASCULINO</option>
+        <option value="FEMENINO">FEMENINO</option>
+      </select>
+    </label>
+    <label>NOMBRE: <input type="text" name="Nombre"></label>
+    <label>APELLIDOS: <input type="text" name="APELLIDOS"></label>
+    <label>NOMBRE DE LOS PADRES: <input type="text" name="Nombre de los Padres"></label>
+    <label>FECHA DE NACIMIENTO: <input type="text" name="FECHA DE NACIMIENTO" placeholder="DD/MM/AAAA"></label>
+    <label>LUGAR DE NACIMIENTO: <input type="text" name="LUGAR DE NACIMIENTO"></label>
+    <label>NACIONALIDAD: <input type="text" name="NACIONALIDAD"></label>
 
-            <div class="row">
-                <div class="col">
-                    <div class="form-group">
-                        <label for="sexo">Sexo:</label>
-                        <select id="sexo" name="SEXO" required>
-                            <option value="">Seleccionar...</option>
-                            <option value="MASCULINO">Masculino</option>
-                            <option value="FEMENINO">Femenino</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="form-group">
-                        <label for="fechaNacimiento">Fecha de Nacimiento:</label>
-                        <input type="date" id="fechaNacimiento" name="FECHA DE NACIMIENTO" required>
-                    </div>
-                </div>
-            </div>
+    <label>DOMICILIO:
+      <select name="DOMICILIO_OPCION">
+        <option value="NO APORTA" selected>NO APORTA</option>
+        <option value="OTRO">OTRO</option>
+      </select>
+      <input type="text" name="DOMICILIO" placeholder="Especificar domicilio" style="display:none;">
+    </label>
 
-            <div class="row">
-                <div class="col">
-                    <div class="form-group">
-                        <label for="lugarNacimiento">Lugar de Nacimiento:</label>
-                        <input type="text" id="lugarNacimiento" name="LUGAR DE NACIMIENTO" required>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="form-group">
-                        <label for="nacionalidad">Nacionalidad:</label>
-                        <input type="text" id="nacionalidad" name="NACIONALIDAD" required>
-                    </div>
-                </div>
-            </div>
+    <label>TELÉFONO:
+      <select name="TELÉFONO_OPCION">
+        <option value="NO APORTA" selected>NO APORTA</option>
+        <option value="OTRO">OTRO</option>
+      </select>
+      <input type="text" name="TELÉFONO" placeholder="Especificar teléfono" style="display:none;">
+    </label>
 
-            <div class="form-group">
-                <label for="nombrePadres">Nombre de los Padres:</label>
-                <input type="text" id="nombrePadres" name="Nombre de los Padres">
-            </div>
+    <label>DELITO: <input type="text" name="DELITO"></label>
+    <label>C.P. AGENTES: <input type="text" name="C.P. AGENTES"></label>
+    <label>DILIGENCIAS: <input type="text" name="DILIGENCIAS"></label>
+    <label>LUGAR DEL HECHO: <input type="text" name="LUGAR DEL HECHO"></label>
+    <label>LUGAR DE LA DETENCIÓN: <input type="text" name="LUGAR DE LA DETENCIÓN"></label>
+    <label>HORA DEL HECHO: <input type="text" name="HORA DEL HECHO" placeholder="HH:MM"></label>
+    <label>HORA DE LA DETENCIÓN: <input type="text" name="HORA DE LA DETENCIÓN" placeholder="HH:MM"></label>
+    <label>BREVE RESUMEN DE LOS HECHOS:
+      <textarea name="BREVE RESUMEN DE LOS HECHOS" rows="3"></textarea>
+    </label>
+    <label>INDICIOS POR LOS QUE SE DETIENE:
+      <textarea name="INDICIOS POR LOS QUE SE DETIENE" rows="3"></textarea>
+    </label>
 
-            <div class="row">
-                <div class="col">
-                    <div class="form-group">
-                        <label for="domicilio">Domicilio:</label>
-                        <input type="text" id="domicilio" name="DOMICILIO">
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="form-group">
-                        <label for="telefono">Teléfono:</label>
-                        <input type="tel" id="telefono" name="TELÉFONO">
-                    </div>
-                </div>
-            </div>
+    <label>ABOGADO:
+      <select name="ABOGADO_OPCION">
+        <option value="DE OFICIO" selected>DE OFICIO</option>
+        <option value="OTRO">OTRO</option>
+      </select>
+      <input type="text" name="ABOGADO" placeholder="Especificar abogado" style="display:none;">
+    </label>
 
-            <div class="form-group">
-                <label for="delito">Delito:</label>
-                <input type="text" id="delito" name="DELITO" required>
-            </div>
+    <label>COMUNICARSE CON:
+      <select name="COMUNICARSE CON_OPCION">
+        <option value="NADIE" selected>NADIE</option>
+        <option value="OTRO">OTRO</option>
+      </select>
+      <input type="text" name="COMUNICARSE CON" placeholder="Especificar contacto" style="display:none;">
+    </label>
 
-            <div class="row">
-                <div class="col">
-                    <div class="form-group">
-                        <label for="cpAgentes">C.P. Agentes:</label>
-                        <input type="text" id="cpAgentes" name="C.P. AGENTES">
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="form-group">
-                        <label for="diligencias">Diligencias:</label>
-                        <input type="text" id="diligencias" name="DILIGENCIAS">
-                    </div>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col">
-                    <div class="form-group">
-                        <label for="lugarHecho">Lugar del Hecho:</label>
-                        <input type="text" id="lugarHecho" name="LUGAR DEL HECHO" required>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="form-group">
-                        <label for="lugarDetencion">Lugar de la Detención:</label>
-                        <input type="text" id="lugarDetencion" name="LUGAR DE LA DETENCIÓN" required>
-                    </div>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col">
-                    <div class="form-group">
-                        <label for="horaHecho">Hora del Hecho:</label>
-                        <input type="time" id="horaHecho" name="HORA DEL HECHO" required>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="form-group">
-                        <label for="horaDetencion">Hora de la Detención:</label>
-                        <input type="time" id="horaDetencion" name="HORA DE LA DETENCIÓN" required>
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label for="breveResumen">Breve Resumen de los Hechos:</label>
-                <textarea id="breveResumen" name="BREVE RESUMEN DE LOS HECHOS" required></textarea>
-            </div>
-
-            <div class="form-group">
-                <label for="indicios">Indicios por los que se Detiene:</label>
-                <textarea id="indicios" name="INDICIOS POR LOS QUE SE DETIENE" required></textarea>
-            </div>
-
-            <div class="row">
-                <div class="col">
-                    <div class="form-group">
-                        <label for="abogado">Abogado:</label>
-                        <select id="abogado" name="ABOGADO">
-                            <option value="">Seleccionar...</option>
-                            <option value="del turno de oficio">Del turno de oficio</option>
-                            <option value="de su elección">De su elección</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="form-group">
-                        <label for="comunicarse">Comunicarse con:</label>
-                        <input type="text" id="comunicarse" name="COMUNICARSE CON:">
-                    </div>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col">
-                    <div class="form-group">
-                        <label for="otrosDerechos">Otros Derechos:</label>
-                        <input type="text" id="otrosDerechos" name="OTROS DERECHOS:">
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="form-group">
-                        <label for="seEnviaA">Se Envía a:</label>
-                        <select id="seEnviaA" name="SE ENVÍA A:">
-                            <option value="">Seleccionar...</option>
-                            <option value="S.C.">S.C.</option>
-                            <option value="Juzgado">Juzgado</option>
-                            <option value="Fiscalía">Fiscalía</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <button type="submit">📁 Generar Documentos</button>
-        </form>
-
-        <div id="message"></div>
+    <label>OTROS DERECHOS:</label>
+    <div class="checkbox-group">
+      <label><input type="checkbox" name="OTROS DERECHOS" value="MEDICO"> MÉDICO</label>
+      <label><input type="checkbox" name="OTROS DERECHOS" value="CONSULADO"> CONSULADO</label>
     </div>
 
-    <script>
-        function showMessage(text, isError = false) {
-            const messageDiv = document.getElementById('message');
-            messageDiv.textContent = text;
-            messageDiv.className = `message ${isError ? 'error' : 'success'}`;
-            setTimeout(() => {
-                messageDiv.textContent = '';
-                messageDiv.className = '';
-            }, 5000);
+    <label>INTÉRPRETE:
+      <select name="INTERPRETE_OPCION">
+        <option value="NO" selected>NO</option>
+        <option value="OTRO">OTRO</option>
+      </select>
+      <input type="text" name="INTERPRETE" placeholder="Especificar idioma" style="display:none;">
+    </label>
+
+    <button type="submit">Generar archivo</button>
+  </form>
+
+  <div id="message"></div>
+
+  <script>
+    // Mostrar/ocultar input si elige "OTRO"
+    document.querySelectorAll('select').forEach(select => {
+      select.addEventListener('change', function() {
+        const textInput = this.closest('label').querySelector('input[type="text"]');
+        if (textInput) {
+          textInput.style.display = (this.value === 'OTRO') ? 'block' : 'none';
+          if (this.value !== 'OTRO') textInput.value = '';
         }
+      });
+    });
 
-        // Función para generar ODT rellenando placeholders
-        async function generarODT(data) {
-            try {
-                // Cargar la plantilla ODT desde el repo
-                const resp = await fetch("plantila_resena.odt");
-                if (!resp.ok) throw new Error("No se pudo cargar plantila_resena.odt");
-                
-                const blob = await resp.arrayBuffer();
-                const zip = await JSZip.loadAsync(blob);
+    function showMessage(msg) {
+      document.getElementById("message").innerText = msg;
+    }
 
-                // Leer el content.xml (donde está el texto del documento)
-                let contentXml = await zip.file("content.xml").async("string");
+    // NUEVO: Generar ODT rellenando placeholders desde Plantila_resena.odt
+    function escapeRegExp(s) {
+      return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+    async function generarODT(data) {
+      const resp = await fetch("plantila_resena.odt"); // nombre exacto en el repo
+      if (!resp.ok) throw new Error("No se pudo cargar plantila_resena.odt");
+      const arrayBuf = await resp.arrayBuffer();
+      const odtZip = await JSZip.loadAsync(arrayBuf);
 
-                // Reemplazar placeholders {{CAMPO}} por datos
-                for (const campo in data) {
-                    const valor = data[campo] || "";
-                    const regex = new RegExp(`{{${campo}}}`, "g");
-                    contentXml = contentXml.replace(regex, valor);
-                }
+      let contentXml = await odtZip.file("content.xml").async("string");
 
-                // Guardar nuevo content.xml al ODT
-                zip.file("content.xml", contentXml);
+      // Reemplaza {{CAMPO}} con el valor correspondiente
+      for (const k in data) {
+        const valor = data[k] ?? "";
+        const re = new RegExp(`{{${escapeRegExp(k)}}}`, "g");
+        contentXml = contentXml.replace(re, valor);
+      }
 
-                // Generar nuevo ODT como blob
-                const newOdtBlob = await zip.generateAsync({ type: "blob" });
-                return newOdtBlob;
-                
-            } catch (error) {
-                console.error("Error generando ODT:", error);
-                throw error;
-            }
+      odtZip.file("content.xml", contentXml);
+      const newOdt = await odtZip.generateAsync({ type: "blob" });
+      saveAs(newOdt, "DETENIDO.odt");
+    }
+
+    document.getElementById("registroForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = {};
+
+      // Selects con "OTRO" o valor por defecto
+      const tipoDoc = formData.get("TIPO DOCUMENTO_OPCION") === "OTRO" ? formData.get("TIPO DOCUMENTO") : formData.get("TIPO DOCUMENTO_OPCION");
+      data["TIPO DOCUMENTO"] = (tipoDoc || "DNI").toUpperCase();
+
+      data["SEXO"] = (formData.get("SEXO_OPCION") || "MASCULINO").toUpperCase();
+
+      const domicilio = formData.get("DOMICILIO_OPCION") === "OTRO" ? formData.get("DOMICILIO") : formData.get("DOMICILIO_OPCION");
+      data["DOMICILIO"] = (domicilio || "NO APORTA").toUpperCase();
+
+      const tel = formData.get("TELÉFONO_OPCION") === "OTRO" ? formData.get("TELÉFONO") : formData.get("TELÉFONO_OPCION");
+      data["TELÉFONO"] = (tel || "NO APORTA").toUpperCase();
+
+      const abo = formData.get("ABOGADO_OPCION") === "OTRO" ? formData.get("ABOGADO") : formData.get("ABOGADO_OPCION");
+      data["ABOGADO"] = (abo || "DE OFICIO").toUpperCase();
+
+      const com = formData.get("COMUNICARSE CON_OPCION") === "OTRO" ? formData.get("COMUNICARSE CON") : formData.get("COMUNICARSE CON_OPCION");
+      data["COMUNICARSE CON:"] = (com || "NADIE").toUpperCase();
+
+      // INTÉRPRETE independiente
+      const interpreteSel = formData.get("INTERPRETE_OPCION");
+      const interpreteOtro = formData.get("INTERPRETE");
+      data["INTERPRETE"] = (interpreteSel === "OTRO" && interpreteOtro) ? interpreteOtro.toUpperCase() : "NO";
+
+      // OTROS DERECHOS (checkboxes)
+      const otros = [];
+      document.querySelectorAll('input[name="OTROS DERECHOS"]:checked').forEach(cb => otros.push(cb.value));
+      data["OTROS DERECHOS"] = otros.length ? otros.map(v => v.toUpperCase()).join(", ") : "NINGUNO";
+
+      // Resto de campos libres
+      formData.forEach((value, key) => {
+        if (value && value.trim() !== "" && !key.includes("_OPCION") && !["TIPO DOCUMENTO","DOMICILIO","TELÉFONO","ABOGADO","COMUNICARSE CON","INTERPRETE","OTROS DERECHOS"].includes(key)) {
+          data[key] = value.toUpperCase();
         }
+      });
 
-        document.getElementById('registroForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(this);
-            const data = {};
-            
-            for (let [key, value] of formData.entries()) {
-                data[key] = value;
-            }
+      // Cabeceras fijas para Excel
+      const headers = [
+        "TIPO DOCUMENTO","NºDOCUMENTO","SEXO","Nombre","APELLIDOS","Nombre de los Padres",
+        "FECHA DE NACIMIENTO","LUGAR DE NACIMIENTO","NACIONALIDAD","DOMICILIO","TELÉFONO",
+        "DELITO","C.P. AGENTES","DILIGENCIAS","LUGAR DEL HECHO","LUGAR DE LA DETENCIÓN",
+        "HORA DEL HECHO","HORA DE LA DETENCIÓN","BREVE RESUMEN DE LOS HECHOS",
+        "INDICIOS POR LOS QUE SE DETIENE","ABOGADO","COMUNICARSE CON:","OTROS DERECHOS",
+        "INTERPRETE"
+      ];
+      const row = {}; headers.forEach(h => row[h] = data[h] || "");
 
-            try {
-                showMessage('⏳ Generando documentos...');
-                
-                // Crear ZIP principal
-                const zip = new JSZip();
-                
-                // --- GENERAR EXCEL ---
-                const wb = XLSX.utils.book_new();
-                const wsData = [
-                    ['TIPO DOCUMENTO', 'NºDOCUMENTO', 'SEXO', 'Nombre', 'APELLIDOS', 'Nombre de los Padres', 'FECHA DE NACIMIENTO', 'LUGAR DE NACIMIENTO', 'NACIONALIDAD', 'DOMICILIO', 'TELÉFONO', 'DELITO', 'C.P. AGENTES', 'DILIGENCIAS', 'LUGAR DEL HECHO', 'LUGAR DE LA DETENCIÓN', 'HORA DEL HECHO', 'HORA DE LA DETENCIÓN', 'BREVE RESUMEN DE LOS HECHOS', 'INDICIOS POR LOS QUE SE DETIENE', 'ABOGADO', 'COMUNICARSE CON:', 'OTROS DERECHOS:', 'SE ENVÍA A:'],
-                    [
-                        data['TIPO DOCUMENTO'] || '',
-                        data['NºDOCUMENTO'] || '',
-                        data['SEXO'] || '',
-                        data['Nombre'] || '',
-                        data['APELLIDOS'] || '',
-                        data['Nombre de los Padres'] || '',
-                        data['FECHA DE NACIMIENTO'] || '',
-                        data['LUGAR DE NACIMIENTO'] || '',
-                        data['NACIONALIDAD'] || '',
-                        data['DOMICILIO'] || '',
-                        data['TELÉFONO'] || '',
-                        data['DELITO'] || '',
-                        data['C.P. AGENTES'] || '',
-                        data['DILIGENCIAS'] || '',
-                        data['LUGAR DEL HECHO'] || '',
-                        data['LUGAR DE LA DETENCIÓN'] || '',
-                        data['HORA DEL HECHO'] || '',
-                        data['HORA DE LA DETENCIÓN'] || '',
-                        data['BREVE RESUMEN DE LOS HECHOS'] || '',
-                        data['INDICIOS POR LOS QUE SE DETIENE'] || '',
-                        data['ABOGADO'] || '',
-                        data['COMUNICARSE CON:'] || '',
-                        data['OTROS DERECHOS:'] || '',
-                        data['SE ENVÍA A:'] || ''
-                    ]
-                ];
-                
-                const ws = XLSX.utils.aoa_to_sheet(wsData);
-                XLSX.utils.book_append_sheet(wb, ws, 'Detenidos');
-                const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-                zip.file('DETENIDO.xlsx', excelBuffer);
+      // Excel
+      const ws = XLSX.utils.json_to_sheet([row], { header: headers });
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Registro");
 
-                // --- GENERAR ODT ---
-                try {
-                    const odtBlob = await generarODT(data);
-                    const odtBuffer = await odtBlob.arrayBuffer();
-                    zip.file('DETENIDO.odt', odtBuffer);
-                } catch (odtError) {
-                    console.warn('Error generando ODT:', odtError);
-                    showMessage('⚠️ Excel generado. ODT no disponible (revisa que plantila_resena.odt esté en el repositorio)');
-                }
+      const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+      const blob = new Blob([wbout], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
 
-                // Generar y descargar ZIP
-                const zipBlob = await zip.generateAsync({ type: 'blob' });
-                saveAs(zipBlob, 'DETENIDO.zip');
-                
-                showMessage('✅ Documentos generados correctamente');
-                
-            } catch (error) {
-                console.error('Error:', error);
-                showMessage('❌ Error al generar los documentos', true);
-            }
+      // ZIP cifrado con Excel (sin tocar tu flujo)
+      try {
+        const writer = new zip.ZipWriter(new zip.BlobWriter("application/zip"), {
+          password: "americas",
+          encryptionStrength: 3
         });
-    </script>
+        await writer.add("DETENIDO.xlsx", new zip.BlobReader(blob));
+        const zipBlob = await writer.close();
+        saveAs(zipBlob, "DETENIDO.zip");
+        showMessage("✅ Archivo 'DETENIDO.zip' generado y descargado.\nProtegido con contraseña: americas");
+      } catch (err) {
+        saveAs(blob, "DETENIDO.xlsx");
+        showMessage("⚠️ No se pudo cifrar ZIP, se descargó Excel sin proteger.");
+      }
+
+      // NUEVO: Generar y descargar el ODT en paralelo
+      try {
+        await generarODT(data);
+      } catch (e) {
+        console.error("Error ODT:", e);
+        // No rompemos el flujo si falla ODT
+      }
+    });
+  </script>
 </body>
 </html>
