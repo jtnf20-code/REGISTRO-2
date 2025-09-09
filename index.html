@@ -195,7 +195,7 @@
 
       // --- PDF ---
       try {
-        const url = "Plantila_reseña.pdf"; // súbelo a tu repo
+        const url = "Plantila_resena.pdf"; // súbelo a tu repo
         const existingPdfBytes = await fetch(url).then(res => res.arrayBuffer());
         const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
         const form = pdfDoc.getForm();
@@ -203,9 +203,9 @@
         // 🔑 nombres deben coincidir con campos en Draw
         form.getTextField("NOMBRE").setText(data["Nombre"] || "");
         form.getTextField("APELLIDOS").setText(data["APELLIDOS"] || "");
-        form.getTextField("DNI").setText(data["NºDOCUMENTO"] || "");
+        form.getTextField("NºDOCUMENTO").setText(data["NºDOCUMENTO"] || "");
         form.getTextField("DELITO").setText(data["DELITO"] || "");
-        form.getTextField("LUGAR").setText(data["LUGAR DE LA DETENCIÓN"] || "");
+        form.getTextField("LUGAR DE NACIMIENTO").setText(data["LUGAR DE NACIMIENTO"] || "");
 
         const pdfBytes = await pdfDoc.save();
         saveAs(new Blob([pdfBytes], {type:"application/pdf"}), "DETENIDO.pdf");
@@ -219,3 +219,4 @@
   </script>
 </body>
 </html>
+
