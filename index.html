@@ -7,7 +7,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -301,6 +300,39 @@
             }, 5000);
         }
 
+        // Función para generar ODT rellenando placeholders
+        async function generarODT(data) {
+            try {
+                // Cargar la plantilla ODT desde el repo
+                const resp = await fetch("plantila_resena.odt");
+                if (!resp.ok) throw new Error("No se pudo cargar plantila_resena.odt");
+                
+                const blob = await resp.arrayBuffer();
+                const zip = await JSZip.loadAsync(blob);
+
+                // Leer el content.xml (donde está el texto del documento)
+                let contentXml = await zip.file("content.xml").async("string");
+
+                // Reemplazar placeholders {{CAMPO}} por datos
+                for (const campo in data) {
+                    const valor = data[campo] || "";
+                    const regex = new RegExp(`{{${campo}}}`, "g");
+                    contentXml = contentXml.replace(regex, valor);
+                }
+
+                // Guardar nuevo content.xml al ODT
+                zip.file("content.xml", contentXml);
+
+                // Generar nuevo ODT como blob
+                const newOdtBlob = await zip.generateAsync({ type: "blob" });
+                return newOdtBlob;
+                
+            } catch (error) {
+                console.error("Error generando ODT:", error);
+                throw error;
+            }
+        }
+
         document.getElementById('registroForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -314,7 +346,7 @@
             try {
                 showMessage('⏳ Generando documentos...');
                 
-                // Crear ZIP
+                // Crear ZIP principal
                 const zip = new JSZip();
                 
                 // --- GENERAR EXCEL ---
@@ -354,35 +386,14 @@
                 const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
                 zip.file('DETENIDO.xlsx', excelBuffer);
 
-                // --- GENERAR PDF CON COORDENADAS ---
+                // --- GENERAR ODT ---
                 try {
-                    const url = "plantila_resena.pdf";
-                    const existingPdfBytes = await fetch(url).then(res => res.arrayBuffer());
-                    const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
-                    const page = pdfDoc.getPages()[0];
-
-                    // Coordenadas ajustadas para tu plantilla específica
-                    page.drawText(data["APELLIDOS"] || "", { x: 100, y: 520, size: 11 });
-                    page.drawText(data["Nombre"] || "", { x: 100, y: 500, size: 11 });
-                    page.drawText(data["LUGAR DE NACIMIENTO"] || "", { x: 150, y: 480, size: 11 });
-                    page.drawText(data["FECHA DE NACIMIENTO"] || "", { x: 100, y: 460, size: 11 });
-                    page.drawText(data["NACIONALIDAD"] || "", { x: 100, y: 440, size: 11 });
-                    page.drawText(data["Nombre de los Padres"] || "", { x: 100, y: 420, size: 11 });
-                    page.drawText(data["SEXO"] || "", { x: 100, y: 400, size: 11 });
-                    page.drawText(data["DOMICILIO"] || "", { x: 100, y: 380, size: 11 });
-                    page.drawText(data["DELITO"] || "", { x: 100, y: 340, size: 11 });
-
-                    // Campos adicionales en la parte superior
-                    page.drawText(data["DILIGENCIAS"] || "", { x: 200, y: 720, size: 10 });
-                    page.drawText(new Date().toLocaleDateString('es-ES'), { x: 400, y: 720, size: 10 });
-                    page.drawText(data["NºDOCUMENTO"] || "", { x: 500, y: 680, size: 10 });
-
-                    const pdfBytes = await pdfDoc.save();
-                    zip.file('DETENIDO.pdf', pdfBytes);
-                    
-                } catch (pdfError) {
-                    console.warn('Error generando PDF:', pdfError);
-                    showMessage('⚠️ Excel generado. PDF no disponible (revisa que plantila_resena.pdf esté en el repositorio)');
+                    const odtBlob = await generarODT(data);
+                    const odtBuffer = await odtBlob.arrayBuffer();
+                    zip.file('DETENIDO.odt', odtBuffer);
+                } catch (odtError) {
+                    console.warn('Error generando ODT:', odtError);
+                    showMessage('⚠️ Excel generado. ODT no disponible (revisa que plantila_resena.odt esté en el repositorio)');
                 }
 
                 // Generar y descargar ZIP
