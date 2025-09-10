@@ -14,18 +14,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
   <style>
-    body {
-      font-family: 'Comfortaa', sans-serif;
-      margin: 20px;
-      background: #f4f4f9;
-    }
-    h1 {
-      text-align: center;
-      text-transform: uppercase;
-      color: #2c3e50;
-      font-size: 2.2em;
-      margin-bottom: 30px;
-    }
+    body { font-family: 'Comfortaa', sans-serif; margin: 20px; background: #f4f4f9; }
+    h1 { text-align: center; text-transform: uppercase; color: #2c3e50; font-size: 2.2em; margin-bottom: 30px; }
     form {
       background: url('fondo.jpg') center/cover no-repeat;
       padding: 20px;
@@ -34,51 +24,20 @@
       max-width: 650px;
       margin: auto;
     }
-    label {
-      display: block;
-      margin-top: 15px;
-      text-transform: uppercase;
-      color: #ffffff;
-      font-size: 1.1em;
-    }
+    label { display: block; margin-top: 15px; text-transform: uppercase; color: #ffffff; font-size: 1.1em; }
     input, select, textarea {
-      width: 100%;
-      padding: 10px;
-      margin-top: 6px;
-      font-family: 'Comfortaa', sans-serif;
-      font-weight: 400;
-      border: 2px solid #ffffff80;
-      border-radius: 5px;
-      background-color: rgba(255,255,255,0.9);
-      font-size: 14px;
-      color: #000;
+      width: 100%; padding: 10px; margin-top: 6px; font-family: 'Comfortaa', sans-serif;
+      border: 2px solid #ffffff80; border-radius: 5px; background-color: rgba(255,255,255,0.9);
+      font-size: 14px; color: #000;
     }
-    input:focus, select:focus, textarea:focus {
-      border-color: #3498db;
-      outline: none;
-    }
+    input:focus, select:focus, textarea:focus { border-color: #3498db; outline: none; }
     button {
-      margin-top: 25px;
-      padding: 12px;
-      background: #3498db;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      width: 100%;
-      font-family: 'Comfortaa', sans-serif;
-      font-weight: 700;
-      font-size: 16px;
-      text-transform: uppercase;
+      margin-top: 25px; padding: 12px; background: #3498db; color: white;
+      border: none; border-radius: 8px; cursor: pointer; width: 100%;
+      font-family: 'Comfortaa', sans-serif; font-weight: 700; font-size: 16px; text-transform: uppercase;
     }
     button:hover { background: #2980b9; }
-    #message {
-      margin-top: 20px;
-      font-weight: bold;
-      text-align: center;
-      white-space: pre-line;
-      color: #2c3e50;
-    }
+    #message { margin-top: 20px; font-weight: bold; text-align: center; white-space: pre-line; color: #2c3e50; }
   </style>
 </head>
 <body>
@@ -86,7 +45,7 @@
   <form id="registroForm">
     <label>TIPO DOCUMENTO:
       <select name="TIPO DOCUMENTO_OPCION">
-        <option value="INDOCUMENTADO" selected>INDOCUMENTADO</option>
+        <option value="INDOCUMENTADO/A" selected>INDOCUMENTADO/A</option>
         <option value="DNI">DNI</option>
         <option value="NIE">NIE</option>
         <option value="OTRO">OTRO</option>
@@ -127,7 +86,7 @@
     <label>DELITO: <input type="text" name="DELITO"></label>
     <label>C.P. AGENTES: <input type="text" name="C.P. AGENTES"></label>
     <label>DILIGENCIAS: <input type="text" name="DILIGENCIAS"></label>
-    <label>Nº INSTRUCTOR: <input type="text" name="INSTRUCTOR"></label>
+    <label>Nº INSTRUCTOR: <input type="text" name="Nº INSTRUCTOR"></label>
     <label>LUGAR DEL HECHO: <input type="text" name="LUGAR DEL HECHO"></label>
     <label>LUGAR DE LA DETENCIÓN: <input type="text" name="LUGAR DE LA DETENCIÓN"></label>
     <label>HORA DEL HECHO: <input type="text" name="HORA DEL HECHO" placeholder="HH:MM"></label>
@@ -155,6 +114,15 @@
       <input type="text" name="COMUNICARSE CON" placeholder="Especificar contacto" style="display:none;">
     </label>
 
+    <!-- INTÉRPRETE AHORA AQUÍ -->
+    <label>INTÉRPRETE:
+      <select name="INTERPRETE_OPCION">
+        <option value="NO" selected>NO</option>
+        <option value="OTRO">OTRO</option>
+      </select>
+      <input type="text" name="INTERPRETE" placeholder="Especificar idioma" style="display:none;">
+    </label>
+
     <label>OTROS DERECHOS:</label>
     <div class="checkbox-group" style="margin-left:10px;">
       <label style="display:flex;align-items:center;margin-top:8px;font-size:1em;text-transform:none;color:#fff;">
@@ -164,14 +132,6 @@
         <input type="checkbox" name="OTROS DERECHOS" value="CONSULADO" style="width:auto;margin-right:10px;transform:scale(1.2);"> CONSULADO
       </label>
     </div>
-
-    <label>INTÉRPRETE:
-      <select name="INTERPRETE_OPCION">
-        <option value="NO" selected>NO</option>
-        <option value="OTRO">OTRO</option>
-      </select>
-      <input type="text" name="INTERPRETE" placeholder="Especificar idioma" style="display:none;">
-    </label>
 
     <button type="submit">Generar ZIP con Excel + ODTs</button>
   </form>
@@ -190,18 +150,16 @@
       });
     });
 
-    function showMessage(msg) {
-      document.getElementById("message").innerText = msg;
-    }
-    function escapeRegExp(s) { return s.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\$&"); }
+    function showMessage(msg) { document.getElementById("message").innerText = msg; }
+    function escapeRegExp(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
 
-    // Plantillas siempre presentes
+    // Plantillas actualizadas
     const ODT_TEMPLATES = {
-      resena:           { file: "plantila_resena.odt" },
-      azules:           { file: "Plantilla_azules.odt" },
-      fax:              { file: "Plantilla_fax.odt" },
-      derechos_ingles:  { file: "Plantilla_derechos_ingles.odt" },
-      derechos_espanol: { file: "Plantilla_derechos_espanol.odt" }
+      amarillas:       { file: "Plantilla_amarillas.odt" },
+      azules:          { file: "Plantilla_azules.odt" },
+      fax:             { file: "Plantilla_fax.odt" },
+      derechos_ingles: { file: "Plantilla_derechos_ingles.odt" },
+      derechos_espanol:{ file: "Plantilla_derechos_espanol.odt" }
     };
 
     async function generarODTBlob(data, odtFileName) {
@@ -211,11 +169,18 @@
       const odtZip = await JSZip.loadAsync(arrayBuf);
 
       let contentXml = await odtZip.file("content.xml").async("string");
+
+      // Sustituciones {{CAMPO}} y {{ CAMPO }}
       for (const k in data) {
         const valor = data[k] ?? "";
-        const re = new RegExp(`{{${escapeRegExp(k)}}}`, "g");
-        contentXml = contentXml.replace(re, valor);
+        const reExact = new RegExp(`{{${escapeRegExp(k)}}}`, "g");
+        const reSpaces = new RegExp(`{{\\s*${escapeRegExp(k)}\\s*}}`, "g");
+        contentXml = contentXml.replace(reExact, valor).replace(reSpaces, valor);
       }
+
+      // Limpieza de placeholders no usados
+      contentXml = contentXml.replace(/{{\s*[^}]+\s*}}/g, "");
+
       odtZip.file("content.xml", contentXml);
       return await odtZip.generateAsync({ type: "blob" });
     }
@@ -227,80 +192,84 @@
       const formData = new FormData(e.target);
       const data = {};
 
-      // Campos opción OTRO
+      // Campos especiales (OTRO)
       const tipoDoc = formData.get("TIPO DOCUMENTO_OPCION") === "OTRO" ? formData.get("TIPO DOCUMENTO") : formData.get("TIPO DOCUMENTO_OPCION");
-      data["TIPO DOCUMENTO"] = (tipoDoc || "INDOCUMENTADO").toUpperCase();
+      data["TIPO DOCUMENTO"] = (tipoDoc || "INDOCUMENTADO/A").toUpperCase();
       data["SEXO"] = (formData.get("SEXO_OPCION") || "MASCULINO").toUpperCase();
+
       const domicilio = formData.get("DOMICILIO_OPCION") === "OTRO" ? formData.get("DOMICILIO") : formData.get("DOMICILIO_OPCION");
       data["DOMICILIO"] = (domicilio || "NO APORTA").toUpperCase();
+
       const tel = formData.get("TELÉFONO_OPCION") === "OTRO" ? formData.get("TELÉFONO") : formData.get("TELÉFONO_OPCION");
       data["TELÉFONO"] = (tel || "NO APORTA").toUpperCase();
+
       const abo = formData.get("ABOGADO_OPCION") === "OTRO" ? formData.get("ABOGADO") : formData.get("ABOGADO_OPCION");
       data["ABOGADO"] = (abo || "DE OFICIO").toUpperCase();
+
       const com = formData.get("COMUNICARSE CON_OPCION") === "OTRO" ? formData.get("COMUNICARSE CON") : formData.get("COMUNICARSE CON_OPCION");
       data["COMUNICARSE CON:"] = (com || "NADIE").toUpperCase();
+
       const interpreteSel = formData.get("INTERPRETE_OPCION");
       const interpreteOtro = formData.get("INTERPRETE");
       data["INTERPRETE"] = (interpreteSel === "OTRO" && interpreteOtro) ? interpreteOtro.toUpperCase() : "NO";
 
-      // OTROS DERECHOS
       const otros = [];
       document.querySelectorAll('input[name="OTROS DERECHOS"]:checked').forEach(cb => otros.push(cb.value));
       data["OTROS DERECHOS"] = otros.length ? otros.map(v => v.toUpperCase()).join(", ") : "NINGUNO";
 
-      // Resto de campos → MAY
-      formData.forEach((value,key)=>{
-        if(value && value.trim()!=="" && !key.includes("_OPCION") && 
-          !["TIPO DOCUMENTO","DOMICILIO","TELÉFONO","ABOGADO","COMUNICARSE CON","INTERPRETE","OTROS DERECHOS"].includes(key)) {
-          data[key]=value.toUpperCase();
+      // Resto de campos normales → mayúsculas
+      formData.forEach((value, key) => {
+        if (value && value.trim() !== "" && !key.includes("_OPCION") &&
+            !["TIPO DOCUMENTO","DOMICILIO","TELÉFONO","ABOGADO","COMUNICARSE CON","INTERPRETE","OTROS DERECHOS"].includes(key)) {
+          data[key] = value.toUpperCase();
         }
       });
 
       // Excel
-      const headers=[
+      const headers = [
         "TIPO DOCUMENTO","NºDOCUMENTO","SEXO","Nombre","APELLIDOS","Nombre de los Padres",
         "FECHA DE NACIMIENTO","LUGAR DE NACIMIENTO","NACIONALIDAD","DOMICILIO","TELÉFONO",
-        "DELITO","C.P. AGENTES","DILIGENCIAS","INSTRUCTOR",
+        "DELITO","C.P. AGENTES","DILIGENCIAS","Nº INSTRUCTOR",
         "LUGAR DEL HECHO","LUGAR DE LA DETENCIÓN",
         "HORA DEL HECHO","HORA DE LA DETENCIÓN","BREVE RESUMEN DE LOS HECHOS",
-        "INDICIOS POR LOS QUE SE DETIENE","ABOGADO","COMUNICARSE CON:","OTROS DERECHOS",
-        "INTERPRETE"];
-      const row={};headers.forEach(h=>row[h]=data[h]||"");
-      const ws=XLSX.utils.json_to_sheet([row],{header:headers});
-      const wb=XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb,ws,"Registro");
-      const wbout=XLSX.write(wb,{bookType:"xlsx",type:"array"});
-      const excelBlob=new Blob([wbout],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+        "INDICIOS POR LOS QUE SE DETIENE","ABOGADO","COMUNICARSE CON:","OTROS DERECHOS","INTERPRETE"
+      ];
+      const row = {}; headers.forEach(h => row[h] = data[h] || "");
+      const ws = XLSX.utils.json_to_sheet([row], { header: headers });
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Registro");
+      const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+      const excelBlob = new Blob([wbout], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
 
-      // ODT generación
-      const keys=Object.keys(ODT_TEMPLATES);
-      const odtResults=await Promise.all(keys.map(async key=>{
-        const{file}=ODT_TEMPLATES[key];
-        try{
-          const blob=await generarODTBlob(data,file);
-          const nombre=key+"_"+(data["Nombre"]||"SINNOMBRE")+"_"+(data["APELLIDOS"]||"SINAPELLIDOS")+".odt";
-          return{out:nombre,blob};
-        }catch(e){
-          console.error("Error con plantilla",file,e);
+      // Generar ODTs
+      const keys = Object.keys(ODT_TEMPLATES);
+      const odtResults = await Promise.all(keys.map(async key => {
+        const { file } = ODT_TEMPLATES[key];
+        try {
+          const blob = await generarODTBlob(data, file);
+          const nombre = key + "_" + (data["Nombre"] || "SINNOMBRE") + "_" + (data["APELLIDOS"] || "SINAPELLIDOS") + ".odt";
+          return { out: nombre, blob };
+        } catch (e) {
+          console.error("Error con plantilla", file, e);
           return null;
         }
       }));
 
-      // ZIP sin contraseña
-      try{
-        const z=new JSZip();
-        z.file("DETENIDO.xlsx",excelBlob);
-        for(const item of odtResults){
-          if(item?.blob) z.file(item.out,item.blob);
+      // Generar ZIP
+      try {
+        const z = new JSZip();
+        z.file("DETENIDO.xlsx", excelBlob);
+        for (const item of odtResults) {
+          if (item?.blob) z.file(item.out, item.blob);
         }
-        const zipBlob=await z.generateAsync({type:"blob"});
-        saveAs(zipBlob,"DETENIDO.zip");
-        const ok=odtResults.filter(x=>x?.blob).length;
+        const zipBlob = await z.generateAsync({ type: "blob" });
+        saveAs(zipBlob, "DETENIDO.zip");
+        const ok = odtResults.filter(x => x?.blob).length;
         showMessage(`✅ DETENIDO.zip generado (sin cifrar).\nIncluye Excel y ${ok}/${keys.length} ODTs.`);
-      }catch(err){
-        console.error("Error creando ZIP",err);
-        saveAs(excelBlob,"DETENIDO.xlsx");
-        showMessage("❌ No se pudo crear el ZIP. Se descargó solo Excel.");
+      } catch (err) {
+        console.error("Error creando ZIP", err);
+        saveAs(excelBlob, "DETENIDO.xlsx");
+        showMessage("❌ No se pudo crear el ZIP. Solo Excel descargado.");
       }
     });
   </script>
