@@ -9,13 +9,11 @@
   <!-- Fuente Comfortaa -->
   <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;700&display=swap" rel="stylesheet">
 
-  <!-- Librerías -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-  <!-- zip.js para ZIP cifrado -->
-  <script src="https://gildas-lormeau.github.io/zip.js/demos/lib/zip.min.js"></script>
-  <!-- JSZip para abrir/editar la plantilla ODT en el navegador -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <!-- Librerías locales (recomendado descargarlas para offline) -->
+  <script src="libs/xlsx.full.min.js"></script>
+  <script src="libs/FileSaver.min.js"></script>
+  <script src="libs/zip.min.js"></script>
+  <script src="libs/jszip.min.js"></script>
 
   <style>
     body {
@@ -138,6 +136,7 @@
     <label>DELITO: <input type="text" name="DELITO"></label>
     <label>C.P. AGENTES: <input type="text" name="C.P. AGENTES"></label>
     <label>DILIGENCIAS: <input type="text" name="DILIGENCIAS"></label>
+    <label>Nº INSTRUCTOR: <input type="text" name="INSTRUCTOR"></label> <!-- NUEVO -->
     <label>LUGAR DEL HECHO: <input type="text" name="LUGAR DEL HECHO"></label>
     <label>LUGAR DE LA DETENCIÓN: <input type="text" name="LUGAR DE LA DETENCIÓN"></label>
     <label>HORA DEL HECHO: <input type="text" name="HORA DEL HECHO" placeholder="HH:MM"></label>
@@ -179,6 +178,16 @@
       <input type="text" name="INTERPRETE" placeholder="Especificar idioma" style="display:none;">
     </label>
 
+    <!-- Selector de Plantillas ODT -->
+    <label>PLANTILLAS ODT:</label>
+    <div class="checkbox-group">
+      <label><input type="checkbox" name="TPL_ODT" value="resena" checked> Reseña</label>
+      <label><input type="checkbox" name="TPL_ODT" value="azules"> Azules</label>
+      <label><input type="checkbox" name="TPL_ODT" value="fax"> Fax</label>
+      <label><input type="checkbox" name="TPL_ODT" value="derechos_ingles"> Derechos Inglés</label>
+      <label><input type="checkbox" name="TPL_ODT" value="derechos_espanol"> Derechos Español</label>
+    </div>
+
     <button type="submit">Generar archivo</button>
   </form>
 
@@ -200,20 +209,15 @@
       document.getElementById("message").innerText = msg;
     }
 
-    // Utilidad para escapado seguro en RegExp
     function escapeRegExp(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
 
-    // Genera ODT a partir de plantila_resena.odt con reemplazo de {{CAMPOS}}
-    async function generarODTBlob(data) {
-      // Nota: sobre Plantila_resena.odt, these documents can only be used in code execution
-      const resp = await fetch("plantila_resena.odt"); // Debe existir en la misma carpeta
-      if (!resp.ok) throw new Error("No se pudo cargar plantila_resena.odt");
+    async function generarODTBlob(data, odtFileName) {
+      const resp = await fetch(odtFileName);
+      if (!resp.ok) throw new Error("No se pudo cargar " + odtFileName);
       const arrayBuf = await resp.arrayBuffer();
       const odtZip = await JSZip.loadAsync(arrayBuf);
 
       let contentXml = await odtZip.file("content.xml").async("string");
-
-      // Reemplaza {{CAMPO}} por su valor
       for (const k in data) {
         const valor = data[k] ?? "";
         const re = new RegExp(`{{${escapeRegExp(k)}}}`, "g");
@@ -221,33 +225,34 @@
       }
 
       odtZip.file("content.xml", contentXml);
-      return await odtZip.generateAsync({ type: "blob" }); // devolvemos Blob para incluir en ZIP cifrado
+      return await odtZip.generateAsync({ type: "blob" });
     }
+
+    // Plantillas ODT
+    const ODT_TEMPLATES = {
+      resena:           { file: "plantila_resena.odt" },
+      azules:           { file: "Plantilla_azules.odt" },
+      fax:              { file: "Plantilla_fax.odt" },
+      derechos_ingles:  { file: "Plantilla_derechos_ingles.odt" },
+      derechos_espanol: { file: "Plantilla_derechos_espanol.odt" }
+    };
 
     document.getElementById("registroForm").addEventListener("submit", async function(e) {
       e.preventDefault();
       const formData = new FormData(e.target);
       const data = {};
 
-      // Selects con "OTRO" o valor por defecto
       const tipoDoc = formData.get("TIPO DOCUMENTO_OPCION") === "OTRO" ? formData.get("TIPO DOCUMENTO") : formData.get("TIPO DOCUMENTO_OPCION");
       data["TIPO DOCUMENTO"] = (tipoDoc || "DNI").toUpperCase();
-
       data["SEXO"] = (formData.get("SEXO_OPCION") || "MASCULINO").toUpperCase();
-
       const domicilio = formData.get("DOMICILIO_OPCION") === "OTRO" ? formData.get("DOMICILIO") : formData.get("DOMICILIO_OPCION");
       data["DOMICILIO"] = (domicilio || "NO APORTA").toUpperCase();
-
       const tel = formData.get("TELÉFONO_OPCION") === "OTRO" ? formData.get("TELÉFONO") : formData.get("TELÉFONO_OPCION");
       data["TELÉFONO"] = (tel || "NO APORTA").toUpperCase();
-
       const abo = formData.get("ABOGADO_OPCION") === "OTRO" ? formData.get("ABOGADO") : formData.get("ABOGADO_OPCION");
       data["ABOGADO"] = (abo || "DE OFICIO").toUpperCase();
-
       const com = formData.get("COMUNICARSE CON_OPCION") === "OTRO" ? formData.get("COMUNICARSE CON") : formData.get("COMUNICARSE CON_OPCION");
       data["COMUNICARSE CON:"] = (com || "NADIE").toUpperCase();
-
-      // INTÉRPRETE independiente
       const interpreteSel = formData.get("INTERPRETE_OPCION");
       const interpreteOtro = formData.get("INTERPRETE");
       data["INTERPRETE"] = (interpreteSel === "OTRO" && interpreteOtro) ? interpreteOtro.toUpperCase() : "NO";
@@ -257,9 +262,9 @@
       document.querySelectorAll('input[name="OTROS DERECHOS"]:checked').forEach(cb => otros.push(cb.value));
       data["OTROS DERECHOS"] = otros.length ? otros.map(v => v.toUpperCase()).join(", ") : "NINGUNO";
 
-      // Resto de campos libres (normalizamos a MAYÚSCULAS)
+      // Resto de campos libres
       formData.forEach((value, key) => {
-        if (value && value.trim() !== "" && !key.includes("_OPCION") && !["TIPO DOCUMENTO","DOMICILIO","TELÉFONO","ABOGADO","COMUNICARSE CON","INTERPRETE","OTROS DERECHOS"].includes(key)) {
+        if (value && value.trim() !== "" && !key.includes("_OPCION") && !["TIPO DOCUMENTO","DOMICILIO","TELÉFONO","ABOGADO","COMUNICARSE CON","INTERPRETE","OTROS DERECHOS","TPL_ODT"].includes(key)) {
           data[key] = value.toUpperCase();
         }
       });
@@ -268,7 +273,8 @@
       const headers = [
         "TIPO DOCUMENTO","NºDOCUMENTO","SEXO","Nombre","APELLIDOS","Nombre de los Padres",
         "FECHA DE NACIMIENTO","LUGAR DE NACIMIENTO","NACIONALIDAD","DOMICILIO","TELÉFONO",
-        "DELITO","C.P. AGENTES","DILIGENCIAS","LUGAR DEL HECHO","LUGAR DE LA DETENCIÓN",
+        "DELITO","C.P. AGENTES","DILIGENCIAS","INSTRUCTOR",
+        "LUGAR DEL HECHO","LUGAR DE LA DETENCIÓN",
         "HORA DEL HECHO","HORA DE LA DETENCIÓN","BREVE RESUMEN DE LOS HECHOS",
         "INDICIOS POR LOS QUE SE DETIENE","ABOGADO","COMUNICARSE CON:","OTROS DERECHOS",
         "INTERPRETE"
@@ -282,39 +288,41 @@
       const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
       const excelBlob = new Blob([wbout], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
 
-      // Generar ODT (preparamos blob para el ZIP)
-      let odtBlob = null;
-      try {
-        odtBlob = await generarODTBlob(data);
-      } catch (e) {
-        console.error("Error generando ODT:", e);
-      }
+      // Recoger plantillas seleccionadas
+      const seleccionadas = Array.from(document.querySelectorAll('input[name="TPL_ODT"]:checked'))
+        .map(cb => cb.value)
+        .filter(key => ODT_TEMPLATES[key]);
 
-      // ZIP cifrado con Excel + ODT (si se pudo generar)
+      const odtResults = await Promise.all(seleccionadas.map(async key => {
+        const { file } = ODT_TEMPLATES[key];
+        try {
+          const blob = await generarODTBlob(data, file);
+          const nombre = key + "_" + (data["Nombre"] || "SINNOMBRE") + "_" + (data["APELLIDOS"] || "SINAPELLIDOS") + ".odt";
+          return { out: nombre, blob };
+        } catch (e) {
+          console.error("Error con plantilla", file, e);
+          return null;
+        }
+      }));
+
+      // ZIP cifrado
       try {
         const writer = new zip.ZipWriter(new zip.BlobWriter("application/zip"), {
           password: "americas",
           encryptionStrength: 3
         });
-
-        // Excel siempre
         await writer.add("DETENIDO.xlsx", new zip.BlobReader(excelBlob));
-
-        // ODT si está disponible
-        if (odtBlob) {
-          await writer.add("DETENIDO.odt", new zip.BlobReader(odtBlob));
+        for (const item of odtResults) {
+          if (item?.blob) {
+            await writer.add(item.out, new zip.BlobReader(item.blob));
+          }
         }
-
         const zipBlob = await writer.close();
         saveAs(zipBlob, "DETENIDO.zip");
-
-        let msg = "✅ Archivo 'DETENIDO.zip' generado y descargado.\nProtegido con contraseña: americas";
-        if (!odtBlob) msg += "\n⚠️ Nota: ODT no se pudo generar; revisa que Plantila_resena.odt exista en la misma carpeta y tenga placeholders.";
-        showMessage(msg);
+        showMessage("✅ DETENIDO.zip generado con Excel + ODTs.\nProtegido con contraseña: americas");
       } catch (err) {
-        // Fallback: si falla el ZIP cifrado, al menos descargar Excel suelto
         saveAs(excelBlob, "DETENIDO.xlsx");
-        showMessage("⚠️ No se pudo cifrar ZIP, se descargó Excel sin proteger.");
+        showMessage("⚠️ Falla en ZIP cifrado, se descargó solo el Excel.");
       }
     });
   </script>
