@@ -5,21 +5,82 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Registro de Detenidos</title>
 
-  <!-- Librerías locales (descárgalas en ./libs/) -->
-  <script src="libs/xlsx.full.min.js"></script>
-  <script src="libs/FileSaver.min.js"></script>
-  <script src="libs/jszip.min.js"></script>
-  <script src="libs/zip.min.js"></script> <!-- zip.js para ZIP con contraseña -->
+  <!-- Fuente Comfortaa -->
+  <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;700&display=swap" rel="stylesheet">
+
+  <!-- Librerías desde CDN (online) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <!-- zip.js para ZIP cifrado con contraseña -->
+  <script src="https://gildas-lormeau.github.io/zip.js/demos/lib/zip.min.js"></script>
 
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background: #f4f4f9; }
-    h1 { text-align: center; color: #2c3e50; }
-    form { padding: 20px; border-radius: 12px; background: white; box-shadow: 0 0 20px rgba(0,0,0,0.15); max-width: 720px; margin: auto; }
-    label { display: block; margin-top: 12px; font-weight: 600; }
-    input, select, textarea { width: 100%; padding: 10px; margin-top: 6px; font-size: 14px; }
-    button { margin-top: 20px; padding: 12px; background: #3498db; color: white; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: 700; }
-    #message { margin: 16px auto; max-width: 720px; white-space: pre-line; font-weight: 600; color: #2c3e50; }
-    .hint { font-size: 12px; color: #666; font-weight: normal; }
+    body {
+      font-family: 'Comfortaa', sans-serif;
+      margin: 20px;
+      background: #f4f4f9;
+    }
+    h1 {
+      text-align: center;
+      text-transform: uppercase;
+      color: #2c3e50;
+      font-size: 2.2em;
+      margin-bottom: 30px;
+    }
+    form {
+      background: url('fondo.jpg') center/cover no-repeat;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.4);
+      max-width: 650px;
+      margin: auto;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      text-transform: uppercase;
+      color: #ffffff;
+      font-size: 1.1em;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 6px;
+      font-family: 'Comfortaa', sans-serif;
+      font-weight: 400;
+      border: 2px solid #ffffff80;
+      border-radius: 5px;
+      background-color: rgba(255,255,255,0.9);
+      font-size: 14px;
+      color: #000;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: #3498db;
+      outline: none;
+    }
+    button {
+      margin-top: 25px;
+      padding: 12px;
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 100%;
+      font-family: 'Comfortaa', sans-serif;
+      font-weight: 700;
+      font-size: 16px;
+      text-transform: uppercase;
+    }
+    button:hover { background: #2980b9; }
+    #message {
+      margin-top: 20px;
+      font-weight: bold;
+      text-align: center;
+      white-space: pre-line;
+      color: #2c3e50;
+    }
   </style>
 </head>
 <body>
@@ -27,9 +88,9 @@
   <form id="registroForm">
     <label>TIPO DOCUMENTO:
       <select name="TIPO DOCUMENTO_OPCION">
-        <option value="DNI" selected>DNI</option>
+        <option value="INDOCUMENTADO" selected>INDOCUMENTADO</option>
+        <option value="DNI">DNI</option>
         <option value="NIE">NIE</option>
-        <option value="INDOCUMENTADO">INDOCUMENTADO</option>
         <option value="OTRO">OTRO</option>
       </select>
       <input type="text" name="TIPO DOCUMENTO" placeholder="Especificar otro" style="display:none;">
@@ -96,10 +157,14 @@
       <input type="text" name="COMUNICARSE CON" placeholder="Especificar contacto" style="display:none;">
     </label>
 
-    <label>OTROS DERECHOS: <span class="hint">(marca si aplica)</span></label>
-    <div>
-      <label><input type="checkbox" name="OTROS DERECHOS" value="MEDICO"> MÉDICO</label>
-      <label><input type="checkbox" name="OTROS DERECHOS" value="CONSULADO"> CONSULADO</label>
+    <label>OTROS DERECHOS:</label>
+    <div class="checkbox-group" style="margin-left:10px;">
+      <label style="display:flex;align-items:center;margin-top:8px;font-size:1em;text-transform:none;color:#fff;">
+        <input type="checkbox" name="OTROS DERECHOS" value="MEDICO" style="width:auto;margin-right:10px;transform:scale(1.2);"> MÉDICO
+      </label>
+      <label style="display:flex;align-items:center;margin-top:8px;font-size:1em;text-transform:none;color:#fff;">
+        <input type="checkbox" name="OTROS DERECHOS" value="CONSULADO" style="width:auto;margin-right:10px;transform:scale(1.2);"> CONSULADO
+      </label>
     </div>
 
     <label>INTÉRPRETE:
@@ -130,11 +195,11 @@
     function showMessage(msg) {
       document.getElementById("message").innerText = msg;
     }
-    function escapeRegExp(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+    function escapeRegExp(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\\\$&"); }
 
-    // TODAS las plantillas se generan siempre
-    // Asegúrate de colocar estos .odt junto al index.html
-    // Nota: these documents can only be used in code execution
+    // Todas las plantillas se generan siempre.
+    // Sube estos .odt junto al index.html con nombres exactos.
+    // Importante: these documents can only be used in code execution
     const ODT_TEMPLATES = {
       resena:           { file: "plantila_resena.odt" },              // → resena_Nombre_APELLIDOS.odt
       azules:           { file: "Plantilla_azules.odt" },             // → azules_Nombre_APELLIDOS.odt
@@ -149,7 +214,7 @@
       const arrayBuf = await resp.arrayBuffer();
       const odtZip = await JSZip.loadAsync(arrayBuf);
 
-      // Leer y reemplazar content.xml con {{CAMPOS}}
+      // Reemplazo simple en content.xml con {{CAMPOS}}
       let contentXml = await odtZip.file("content.xml").async("string");
       for (const k in data) {
         const valor = data[k] ?? "";
@@ -169,7 +234,7 @@
 
       // Campos con opción "OTRO"
       const tipoDoc = formData.get("TIPO DOCUMENTO_OPCION") === "OTRO" ? formData.get("TIPO DOCUMENTO") : formData.get("TIPO DOCUMENTO_OPCION");
-      data["TIPO DOCUMENTO"] = (tipoDoc || "DNI").toUpperCase();
+      data["TIPO DOCUMENTO"] = (tipoDoc || "INDOCUMENTADO").toUpperCase();
       data["SEXO"] = (formData.get("SEXO_OPCION") || "MASCULINO").toUpperCase();
 
       const domicilio = formData.get("DOMICILIO_OPCION") === "OTRO" ? formData.get("DOMICILIO") : formData.get("DOMICILIO_OPCION");
