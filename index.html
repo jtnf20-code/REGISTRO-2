@@ -8,12 +8,10 @@
   <!-- Fuente Comfortaa -->
   <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;700&display=swap" rel="stylesheet">
 
-  <!-- Librerías desde CDN (online) -->
+  <!-- Librerías desde CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <!-- zip.js para ZIP cifrado con contraseña -->
-  <script src="https://gildas-lormeau.github.io/zip.js/demos/lib/zip.min.js"></script>
 
   <style>
     body {
@@ -195,17 +193,15 @@
     function showMessage(msg) {
       document.getElementById("message").innerText = msg;
     }
-    function escapeRegExp(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\\\$&"); }
+    function escapeRegExp(s) { return s.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\$&"); }
 
-    // Todas las plantillas se generan siempre.
-    // Sube estos .odt junto al index.html con nombres exactos.
-    // Importante: these documents can only be used in code execution
+    // Plantillas siempre presentes
     const ODT_TEMPLATES = {
-      resena:           { file: "plantila_resena.odt" },              // → resena_Nombre_APELLIDOS.odt
-      azules:           { file: "Plantilla_azules.odt" },             // → azules_Nombre_APELLIDOS.odt
-      fax:              { file: "Plantilla_fax.odt" },                // → fax_Nombre_APELLIDOS.odt
-      derechos_ingles:  { file: "Plantilla_derechos_ingles.odt" },    // → derechos_ingles_Nombre_APELLIDOS.odt
-      derechos_espanol: { file: "Plantilla_derechos_espanol.odt" }    // → derechos_espanol_Nombre_APELLIDOS.odt
+      resena:           { file: "plantila_resena.odt" },
+      azules:           { file: "Plantilla_azules.odt" },
+      fax:              { file: "Plantilla_fax.odt" },
+      derechos_ingles:  { file: "Plantilla_derechos_ingles.odt" },
+      derechos_espanol: { file: "Plantilla_derechos_espanol.odt" }
     };
 
     async function generarODTBlob(data, odtFileName) {
@@ -214,7 +210,6 @@
       const arrayBuf = await resp.arrayBuffer();
       const odtZip = await JSZip.loadAsync(arrayBuf);
 
-      // Reemplazo simple en content.xml con {{CAMPOS}}
       let contentXml = await odtZip.file("content.xml").async("string");
       for (const k in data) {
         const valor = data[k] ?? "";
@@ -232,103 +227,80 @@
       const formData = new FormData(e.target);
       const data = {};
 
-      // Campos con opción "OTRO"
+      // Campos opción OTRO
       const tipoDoc = formData.get("TIPO DOCUMENTO_OPCION") === "OTRO" ? formData.get("TIPO DOCUMENTO") : formData.get("TIPO DOCUMENTO_OPCION");
       data["TIPO DOCUMENTO"] = (tipoDoc || "INDOCUMENTADO").toUpperCase();
       data["SEXO"] = (formData.get("SEXO_OPCION") || "MASCULINO").toUpperCase();
-
       const domicilio = formData.get("DOMICILIO_OPCION") === "OTRO" ? formData.get("DOMICILIO") : formData.get("DOMICILIO_OPCION");
       data["DOMICILIO"] = (domicilio || "NO APORTA").toUpperCase();
-
       const tel = formData.get("TELÉFONO_OPCION") === "OTRO" ? formData.get("TELÉFONO") : formData.get("TELÉFONO_OPCION");
       data["TELÉFONO"] = (tel || "NO APORTA").toUpperCase();
-
       const abo = formData.get("ABOGADO_OPCION") === "OTRO" ? formData.get("ABOGADO") : formData.get("ABOGADO_OPCION");
       data["ABOGADO"] = (abo || "DE OFICIO").toUpperCase();
-
       const com = formData.get("COMUNICARSE CON_OPCION") === "OTRO" ? formData.get("COMUNICARSE CON") : formData.get("COMUNICARSE CON_OPCION");
       data["COMUNICARSE CON:"] = (com || "NADIE").toUpperCase();
-
       const interpreteSel = formData.get("INTERPRETE_OPCION");
       const interpreteOtro = formData.get("INTERPRETE");
       data["INTERPRETE"] = (interpreteSel === "OTRO" && interpreteOtro) ? interpreteOtro.toUpperCase() : "NO";
 
-      // OTROS DERECHOS (checkboxes)
+      // OTROS DERECHOS
       const otros = [];
       document.querySelectorAll('input[name="OTROS DERECHOS"]:checked').forEach(cb => otros.push(cb.value));
       data["OTROS DERECHOS"] = otros.length ? otros.map(v => v.toUpperCase()).join(", ") : "NINGUNO";
 
-      // Resto de campos → MAYÚSCULAS
-      formData.forEach((value, key) => {
-        if (value && value.trim() !== "" && !key.includes("_OPCION") && !["TIPO DOCUMENTO","DOMICILIO","TELÉFONO","ABOGADO","COMUNICARSE CON","INTERPRETE","OTROS DERECHOS"].includes(key)) {
-          data[key] = value.toUpperCase();
+      // Resto de campos → MAY
+      formData.forEach((value,key)=>{
+        if(value && value.trim()!=="" && !key.includes("_OPCION") && 
+          !["TIPO DOCUMENTO","DOMICILIO","TELÉFONO","ABOGADO","COMUNICARSE CON","INTERPRETE","OTROS DERECHOS"].includes(key)) {
+          data[key]=value.toUpperCase();
         }
       });
 
       // Excel
-      const headers = [
+      const headers=[
         "TIPO DOCUMENTO","NºDOCUMENTO","SEXO","Nombre","APELLIDOS","Nombre de los Padres",
         "FECHA DE NACIMIENTO","LUGAR DE NACIMIENTO","NACIONALIDAD","DOMICILIO","TELÉFONO",
         "DELITO","C.P. AGENTES","DILIGENCIAS","INSTRUCTOR",
         "LUGAR DEL HECHO","LUGAR DE LA DETENCIÓN",
         "HORA DEL HECHO","HORA DE LA DETENCIÓN","BREVE RESUMEN DE LOS HECHOS",
         "INDICIOS POR LOS QUE SE DETIENE","ABOGADO","COMUNICARSE CON:","OTROS DERECHOS",
-        "INTERPRETE"
-      ];
-      const row = {}; headers.forEach(h => row[h] = data[h] || "");
-      const ws = XLSX.utils.json_to_sheet([row], { header: headers });
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Registro");
-      const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-      const excelBlob = new Blob([wbout], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+        "INTERPRETE"];
+      const row={};headers.forEach(h=>row[h]=data[h]||"");
+      const ws=XLSX.utils.json_to_sheet([row],{header:headers});
+      const wb=XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb,ws,"Registro");
+      const wbout=XLSX.write(wb,{bookType:"xlsx",type:"array"});
+      const excelBlob=new Blob([wbout],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
 
-      // Generar TODAS las plantillas
-      const keys = Object.keys(ODT_TEMPLATES);
-      const odtResults = await Promise.all(keys.map(async key => {
-        const { file } = ODT_TEMPLATES[key];
-        try {
-          const blob = await generarODTBlob(data, file);
-          const nombre = key + "_" + (data["Nombre"] || "SINNOMBRE") + "_" + (data["APELLIDOS"] || "SINAPELLIDOS") + ".odt";
-          return { out: nombre, blob };
-        } catch (e) {
-          console.error("Error con plantilla", file, e);
+      // ODT generación
+      const keys=Object.keys(ODT_TEMPLATES);
+      const odtResults=await Promise.all(keys.map(async key=>{
+        const{file}=ODT_TEMPLATES[key];
+        try{
+          const blob=await generarODTBlob(data,file);
+          const nombre=key+"_"+(data["Nombre"]||"SINNOMBRE")+"_"+(data["APELLIDOS"]||"SINAPELLIDOS")+".odt";
+          return{out:nombre,blob};
+        }catch(e){
+          console.error("Error con plantilla",file,e);
           return null;
         }
       }));
 
-      // Crear ZIP cifrado y descargar
-      try {
-        const writer = new zip.ZipWriter(new zip.BlobWriter("application/zip"), {
-          password: "americas",
-          encryptionStrength: 3
-        });
-        await writer.add("DETENIDO.xlsx", new zip.BlobReader(excelBlob));
-        for (const item of odtResults) {
-          if (item?.blob) await writer.add(item.out, new zip.BlobReader(item.blob));
+      // ZIP sin contraseña
+      try{
+        const z=new JSZip();
+        z.file("DETENIDO.xlsx",excelBlob);
+        for(const item of odtResults){
+          if(item?.blob) z.file(item.out,item.blob);
         }
-        const zipBlob = await writer.close();
-        saveAs(zipBlob, "DETENIDO.zip");
-        const ok = odtResults.filter(x => x?.blob).length;
-        const tot = keys.length;
-        showMessage(`✅ DETENIDO.zip generado. Incluye Excel y ${ok}/${tot} ODTs.\nContraseña: americas`);
-      } catch (err) {
-        console.warn("Fallo ZIP cifrado, intentando ZIP simple...", err);
-        // Fallback: ZIP sin contraseña usando JSZip
-        try {
-          const z = new JSZip();
-          z.file("DETENIDO.xlsx", excelBlob);
-          for (const item of odtResults) {
-            if (item?.blob) z.file(item.out, item.blob);
-          }
-          const zipBlob = await z.generateAsync({ type: "blob" });
-          saveAs(zipBlob, "DETENIDO.zip");
-          showMessage("⚠️ ZIP sin cifrar generado (fallback).");
-        } catch (e2) {
-          console.error("Error generando ZIP fallback", e2);
-          // Último fallback: descargar solo el Excel
-          saveAs(excelBlob, "DETENIDO.xlsx");
-          showMessage("❌ No se pudo crear el ZIP. Se descargó solo DETENIDO.xlsx.");
-        }
+        const zipBlob=await z.generateAsync({type:"blob"});
+        saveAs(zipBlob,"DETENIDO.zip");
+        const ok=odtResults.filter(x=>x?.blob).length;
+        showMessage(`✅ DETENIDO.zip generado (sin cifrar).\nIncluye Excel y ${ok}/${keys.length} ODTs.`);
+      }catch(err){
+        console.error("Error creando ZIP",err);
+        saveAs(excelBlob,"DETENIDO.xlsx");
+        showMessage("❌ No se pudo crear el ZIP. Se descargó solo Excel.");
       }
     });
   </script>
