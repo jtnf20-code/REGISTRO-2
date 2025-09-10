@@ -18,12 +18,14 @@
       font-family: 'Comfortaa', sans-serif;
       margin: 20px;
       background: #f4f4f9;
-      color: #000; /* 👉 Texto fuera del formulario en negro */
+      color: #000 !important; /* Texto fuera del formulario en negro forzado */
+    }
+    h1, p, #message {
+      color: #000 !important; /* Forzamos negro por si hay estilos cacheados */
     }
     h1 {
       text-align: center;
       text-transform: uppercase;
-      color: #000; /* 👉 título en negro */
       font-size: 2.2em;
       margin-bottom: 30px;
     }
@@ -39,12 +41,12 @@
       display: block;
       margin-top: 15px;
       text-transform: uppercase;
-      color: #ffffff;
-      font-size: 1.1em;
+      color: #ffffff; /* blanco dentro del formulario para contraste */
+      font-size: 1.05em;
     }
     input, select, textarea {
       width: 100%;
-      padding: 12px; /* 👉 igual tamaño de globos */
+      padding: 12px; /* globos homogéneos */
       margin-top: 6px;
       font-family: 'Comfortaa', sans-serif;
       border: 2px solid #ffffff80;
@@ -52,15 +54,15 @@
       background-color: rgba(255,255,255,0.95);
       font-size: 15px;
       color: #000;
-      box-sizing: border-box; /* 👉 todos consistentes */
+      box-sizing: border-box;
     }
     input:focus, select:focus, textarea:focus {
       border-color: #3498db;
       outline: none;
     }
     textarea {
-      resize: vertical; /* ajustable verticalmente */
-      min-height: 100px; /* 👉 mantiene tamaño consistente */
+      resize: vertical;
+      min-height: 100px;
     }
     button {
       margin-top: 25px;
@@ -82,16 +84,72 @@
       font-weight: bold;
       text-align: center;
       white-space: pre-line;
-      color: #2c3e50;
     }
   </style>
 </head>
 <body>
   <h1>Registro de Detenidos</h1>
-  <form id="registroForm">
 
-    <!-- 🔹 Aquí siguen todos los inputs idénticos a tu versión actual (TIPO DOCUMENTO, SEXO, etc.) -->
+  <form id="registroForm">
+    <label>TIPO DOCUMENTO:
+      <select name="TIPO DOCUMENTO_OPCION">
+        <option value="INDOCUMENTADO/A" selected>INDOCUMENTADO/A</option>
+        <option value="DNI">DNI</option>
+        <option value="NIE">NIE</option>
+        <option value="OTRO">OTRO</option>
+      </select>
+      <input type="text" name="TIPO DOCUMENTO" placeholder="Especificar otro" style="display:none;">
+    </label>
+
+    <label>NºDOCUMENTO: <input type="text" name="NºDOCUMENTO"></label>
+
+    <label>SEXO:
+      <select name="SEXO_OPCION">
+        <option value="MASCULINO" selected>MASCULINO</option>
+        <option value="FEMENINO">FEMENINO</option>
+      </select>
+    </label>
+
+    <label>NOMBRE: <input type="text" name="Nombre"></label>
+    <label>APELLIDOS: <input type="text" name="APELLIDOS"></label>
+    <label>NOMBRE DE LOS PADRES: <input type="text" name="Nombre de los Padres"></label>
+
+    <label>FECHA DE NACIMIENTO: <input type="text" name="FECHA DE NACIMIENTO" placeholder="DD/MM/AAAA"></label>
+    <label>LUGAR DE NACIMIENTO: <input type="text" name="LUGAR DE NACIMIENTO"></label>
+    <label>NACIONALIDAD: <input type="text" name="NACIONALIDAD"></label>
+
+    <label>DOMICILIO:
+      <select name="DOMICILIO_OPCION">
+        <option value="NO APORTA" selected>NO APORTA</option>
+        <option value="OTRO">OTRO</option>
+      </select>
+      <input type="text" name="DOMICILIO" placeholder="Especificar domicilio" style="display:none;">
+    </label>
+
+    <label>TELÉFONO:
+      <select name="TELÉFONO_OPCION">
+        <option value="NO APORTA" selected>NO APORTA</option>
+        <option value="OTRO">OTRO</option>
+      </select>
+      <input type="text" name="TELÉFONO" placeholder="Especificar teléfono" style="display:none;">
+    </label>
+
+    <label>DELITO: <input type="text" name="DELITO"></label>
+    <label>C.P. AGENTES: <input type="text" name="C.P. AGENTES"></label>
+    <label>DILIGENCIAS: <input type="text" name="DILIGENCIAS"></label>
     <label>INSTRUCTOR: <input type="text" name="INSTRUCTOR"></label>
+
+    <label>LUGAR DEL HECHO: <input type="text" name="LUGAR DEL HECHO"></label>
+    <label>LUGAR DE LA DETENCIÓN: <input type="text" name="LUGAR DE LA DETENCIÓN"></label>
+    <label>HORA DEL HECHO: <input type="text" name="HORA DEL HECHO" placeholder="HH:MM"></label>
+    <label>HORA DE LA DETENCIÓN: <input type="text" name="HORA DE LA DETENCIÓN" placeholder="HH:MM"></label>
+
+    <label>BREVE RESUMEN DE LOS HECHOS:
+      <textarea name="BREVE RESUMEN DE LOS HECHOS" rows="3"></textarea>
+    </label>
+    <label>INDICIOS POR LOS QUE SE DETIENE:
+      <textarea name="INDICIOS POR LOS QUE SE DETIENE" rows="3"></textarea>
+    </label>
 
     <label>ABOGADO:
       <select name="ABOGADO_OPCION">
@@ -107,6 +165,14 @@
         <option value="OTRO">OTRO</option>
       </select>
       <input type="text" name="COMUNICARSE CON" placeholder="Especificar contacto" style="display:none;">
+    </label>
+
+    <label>INTÉRPRETE:
+      <select name="INTERPRETE_OPCION">
+        <option value="NO" selected>NO</option>
+        <option value="OTRO">OTRO</option>
+      </select>
+      <input type="text" name="INTERPRETE" placeholder="Especificar idioma" style="display:none;">
     </label>
 
     <label>MÉDICO:
@@ -143,7 +209,7 @@
     function showMessage(msg) { document.getElementById("message").innerText = msg; }
     function escapeRegExp(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
 
-    // Función para Title Case (cada palabra inicial en mayúscula)
+    // Title Case
     function toTitleCase(str) {
       return str.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
     }
@@ -155,6 +221,7 @@
       return new RegExp("\\{\\{(?:\\s|<[^>]+>|&nbsp;)*" + flexible + "(?:\\s|<[^>]+>|&nbsp;)*\\}\\}", "gi");
     }
 
+    // Plantillas ODT (these documents can only be used in code execution)
     const ODT_TEMPLATES = {
       amarillas:        { file: "Plantilla_amarillas.odt" },
       azules:           { file: "Plantilla_azules.odt" },
@@ -162,8 +229,8 @@
       derechos_ingles:  { file: "Plantilla_derechos_ingles.odt" },
       derechos_espanol: { file: "Plantilla_derechos_espanol.odt" }
     };
-    // these documents can only be used in code execution
 
+    // Reemplazo tolerante en ODT
     async function generarODTBlob(data, odtFileName) {
       const resp = await fetch(odtFileName);
       if (!resp.ok) throw new Error("No se pudo cargar " + odtFileName);
@@ -192,11 +259,26 @@
       const formData = new FormData(e.target);
       const data = {};
 
-      // ABOGADO en Title Case
+      // TIPO DOCUMENTO
+      const tipoDoc = formData.get("TIPO DOCUMENTO_OPCION") === "OTRO" ? formData.get("TIPO DOCUMENTO") : formData.get("TIPO DOCUMENTO_OPCION");
+      data["TIPO DOCUMENTO"] = (tipoDoc || "INDOCUMENTADO/A").toUpperCase();
+
+      // SEXO
+      data["SEXO"] = (formData.get("SEXO_OPCION") || "MASCULINO").toUpperCase();
+
+      // DOMICILIO
+      const domicilio = formData.get("DOMICILIO_OPCION") === "OTRO" ? formData.get("DOMICILIO") : formData.get("DOMICILIO_OPCION");
+      data["DOMICILIO"] = (domicilio || "NO APORTA").toUpperCase();
+
+      // TELÉFONO
+      const tel = formData.get("TELÉFONO_OPCION") === "OTRO" ? formData.get("TELÉFONO") : formData.get("TELÉFONO_OPCION");
+      data["TELÉFONO"] = (tel || "NO APORTA").toUpperCase();
+
+      // ABOGADO (Title Case)
       const abo = formData.get("ABOGADO_OPCION") === "OTRO" ? formData.get("ABOGADO") : formData.get("ABOGADO_OPCION");
       data["ABOGADO"] = abo ? toTitleCase(abo) : "De Oficio";
 
-      // COMUNICARSE CON en Title Case (o Nadie)
+      // COMUNICARSE CON (Title Case o "Nadie")
       const comSel = formData.get("COMUNICARSE CON_OPCION");
       const comTxt = formData.get("COMUNICARSE CON");
       if (comSel === "OTRO" && comTxt) {
@@ -205,19 +287,24 @@
         data["COMUNICARSE CON:"] = "Nadie";
       }
 
-      // MÉDICO / CONSULADO
+      // INTÉRPRETE → {{IDIOMA}}
+      const interpreteSel = formData.get("INTERPRETE_OPCION");
+      const interpreteOtro = formData.get("INTERPRETE");
+      data["IDIOMA"] = (interpreteSel === "OTRO" && interpreteOtro) ? interpreteOtro : "";
+
+      // MÉDICO y CONSULADO → “SI” o vacío
       data["MEDICO"] = (formData.get("MEDICO") === "SI") ? "SI" : "";
       data["CONSULADO"] = (formData.get("CONSULADO") === "SI") ? "SI" : "";
 
-      // Resto de campos en MAYÚSCULAS (como antes)
+      // Resto de campos → en MAYÚSCULAS o vacío, siempre presentes
       formData.forEach((value, key) => {
         if (!key.includes("_OPCION") &&
-            !["ABOGADO","COMUNICARSE CON","MEDICO","CONSULADO"].includes(key)) {
+            !["ABOGADO","COMUNICARSE CON","MEDICO","CONSULADO","TIPO DOCUMENTO","DOMICILIO","TELÉFONO","INTERPRETE"].includes(key)) {
           data[key] = (value && value.trim() !== "") ? value.toUpperCase() : "";
         }
       });
 
-      // Excel con headers actualizados
+      // Excel
       const headers = [
         "TIPO DOCUMENTO","NºDOCUMENTO","SEXO","Nombre","APELLIDOS","Nombre de los Padres",
         "FECHA DE NACIMIENTO","LUGAR DE NACIMIENTO","NACIONALIDAD","DOMICILIO","TELÉFONO",
@@ -247,17 +334,19 @@
         }
       }));
 
+      // ZIP
       try {
         const z = new JSZip();
         z.file("DETENIDO.xlsx", excelBlob);
         for (const item of odtResults) if (item?.blob) z.file(item.out, item.blob);
         const zipBlob = await z.generateAsync({ type: "blob" });
         saveAs(zipBlob, "DETENIDO.zip");
-        showMessage("✅ Archivos generados y empaquetados.");
+        const ok = odtResults.filter(x => x?.blob).length;
+        showMessage(`✅ DETENIDO.zip generado (sin cifrar).\nIncluye Excel y ${ok}/${keys.length} ODTs.`);
       } catch (err) {
         console.error("Error creando ZIP", err);
         saveAs(excelBlob, "DETENIDO.xlsx");
-        showMessage("❌ No se pudo comprimir, solo Excel descargado.");
+        showMessage("❌ No se pudo crear el ZIP. Solo Excel descargado.");
       }
     });
   </script>
