@@ -144,6 +144,7 @@
   <div id="message"></div>
 
   <script>
+    // Mostrar/ocultar input si elige "OTRO"
     document.querySelectorAll('select').forEach(select => {
       select.addEventListener('change', function() {
         const textInput = this.closest('label')?.querySelector('input[type="text"]');
@@ -157,6 +158,14 @@
     function showMessage(msg) { document.getElementById("message").innerText = msg; }
     function escapeRegExp(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
 
+    // Construye un regex tolerante a placeholders partidos por etiquetas/espacios
+    function buildFlexibleRegex(key) {
+      const chars = key.split("").map(ch => escapeRegExp(ch));
+      const flexible = chars.join("(?:\\s|<[^>]+>|&nbsp;)*");
+      return new RegExp("\\{\\{(?:\\s|<[^>]+>|&nbsp;)*" + flexible + "(?:\\s|<[^>]+>|&nbsp;)*\\}\\}", "gi");
+    }
+
+    // Plantillas ODT (these documents can only be used in code execution)
     const ODT_TEMPLATES = {
       amarillas:        { file: "Plantilla_amarillas.odt" },
       azules:           { file: "Plantilla_azules.odt" },
@@ -165,18 +174,29 @@
       derechos_espanol: { file: "Plantilla_derechos_espanol.odt" }
     };
 
+    // Reemplazo tolerante en ODT
     async function generarODTBlob(data, odtFileName) {
       const resp = await fetch(odtFileName);
+      if (!resp.ok) throw new Error("No se pudo cargar " + odtFileName);
       const arrayBuf = await resp.arrayBuffer();
       const odtZip = await JSZip.loadAsync(arrayBuf);
-      let contentXml = await odtZip.file("content.xml").async("string");
 
+      let contentXml = await odtZip.file("content.xml").async("string");
+      if (contentXml.normalize) contentXml = contentXml.normalize("NFC");
+
+      // Reemplazo para todas las claves, tolerante y exacto
       for (const k in data) {
         const valor = data[k] ?? "";
+        // Tolerante (placeholder partido por spans/espacios)
+        const regexFlexible = buildFlexibleRegex(k);
+        contentXml = contentXml.replace(regexFlexible, valor);
+        // Por si viene limpio
         const reExact = new RegExp(`{{${escapeRegExp(k)}}}`, "g");
         const reSpaces = new RegExp(`{{\\s*${escapeRegExp(k)}\\s*}}`, "g");
         contentXml = contentXml.replace(reExact, valor).replace(reSpaces, valor);
       }
+
+      // Limpieza: elimina placeholders sobrantes
       contentXml = contentXml.replace(/{{\s*[^}]+\s*}}/g, "");
 
       odtZip.file("content.xml", contentXml);
@@ -190,37 +210,47 @@
       const formData = new FormData(e.target);
       const data = {};
 
-      // Campos especiales (OTRO, etc.)
+      // TIPO DOCUMENTO
       const tipoDoc = formData.get("TIPO DOCUMENTO_OPCION") === "OTRO" ? formData.get("TIPO DOCUMENTO") : formData.get("TIPO DOCUMENTO_OPCION");
       data["TIPO DOCUMENTO"] = (tipoDoc || "INDOCUMENTADO/A").toUpperCase();
+
+      // SEXO
       data["SEXO"] = (formData.get("SEXO_OPCION") || "MASCULINO").toUpperCase();
 
+      // DOMICILIO
       const domicilio = formData.get("DOMICILIO_OPCION") === "OTRO" ? formData.get("DOMICILIO") : formData.get("DOMICILIO_OPCION");
       data["DOMICILIO"] = (domicilio || "NO APORTA").toUpperCase();
+
+      // TELÉFONO
       const tel = formData.get("TELÉFONO_OPCION") === "OTRO" ? formData.get("TELÉFONO") : formData.get("TELÉFONO_OPCION");
       data["TELÉFONO"] = (tel || "NO APORTA").toUpperCase();
+
+      // ABOGADO
       const abo = formData.get("ABOGADO_OPCION") === "OTRO" ? formData.get("ABOGADO") : formData.get("ABOGADO_OPCION");
       data["ABOGADO"] = (abo || "DE OFICIO").toUpperCase();
-      const com = formData.get("COMUNICARSE CON_OPCION") === "OTRO" ? formData.get("COMUNICARSE CON") : formData.get("COMUNICARSE CON_OPCION");
-      data["COMUNICARSE CON:"] = (com || "nadie");
 
+      // COMUNICARSE CON → mantener "nadie" en minúsculas si es por defecto
+      const com = formData.get("COMUNICARSE CON_OPCION") === "OTRO" ? formData.get("COMUNICARSE CON") : formData.get("COMUNICARSE CON_OPCION");
+      data["COMUNICARSE CON:"] = (com || "nadie"); // sin .toUpperCase()
+
+      // INTÉRPRETE → mapear a {{IDIOMA}} en plantillas
       const interpreteSel = formData.get("INTERPRETE_OPCION");
       const interpreteOtro = formData.get("INTERPRETE");
-      data["IDIOMA"] = (interpreteSel === "OTRO" && interpreteOtro) ? interpreteOtro : "";
+      data["IDIOMA"] = (interpreteSel === "OTRO" && interpreteOtro) ? interpreteOtro : ""; // vacío si NO
 
-      // MÉDICO y CONSULADO → solo trasladamos "SI", si es NO queda vacío
+      // MÉDICO y CONSULADO → solo “SI”, si NO queda vacío
       data["MEDICO"] = (formData.get("MEDICO") === "SI") ? "SI" : "";
       data["CONSULADO"] = (formData.get("CONSULADO") === "SI") ? "SI" : "";
 
-      // Resto en MAYÚSC
+      // Resto de campos → siempre presentes (vacíos o valor en MAYÚSCULAS)
       formData.forEach((value, key) => {
-        if (value && value.trim() !== "" &&
-            !key.includes("_OPCION") &&
+        if (!key.includes("_OPCION") &&
             !["TIPO DOCUMENTO","DOMICILIO","TELÉFONO","ABOGADO","COMUNICARSE CON","INTERPRETE","MEDICO","CONSULADO"].includes(key)) {
-          data[key] = value.toUpperCase();
+          data[key] = (value && value.trim() !== "") ? value.toUpperCase() : "";
         }
       });
 
+      // Excel (incluye INSTRUCTOR, MEDICO, CONSULADO)
       const headers = [
         "TIPO DOCUMENTO","NºDOCUMENTO","SEXO","Nombre","APELLIDOS","Nombre de los Padres",
         "FECHA DE NACIMIENTO","LUGAR DE NACIMIENTO","NACIONALIDAD","DOMICILIO","TELÉFONO",
@@ -236,6 +266,7 @@
       const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
       const excelBlob = new Blob([wbout], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
 
+      // Generar ODTs
       const keys = Object.keys(ODT_TEMPLATES);
       const odtResults = await Promise.all(keys.map(async key => {
         const { file } = ODT_TEMPLATES[key];
@@ -249,10 +280,13 @@
         }
       }));
 
+      // Generar ZIP
       try {
         const z = new JSZip();
         z.file("DETENIDO.xlsx", excelBlob);
-        for (const item of odtResults) if (item?.blob) z.file(item.out, item.blob);
+        for (const item of odtResults) {
+          if (item?.blob) z.file(item.out, item.blob);
+        }
         const zipBlob = await z.generateAsync({ type: "blob" });
         saveAs(zipBlob, "DETENIDO.zip");
         const ok = odtResults.filter(x => x?.blob).length;
