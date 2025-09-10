@@ -108,13 +108,13 @@
 
     <label>COMUNICARSE CON:
       <select name="COMUNICARSE CON_OPCION">
-        <option value="NADIE" selected>NADIE</option>
+        <option value="nadie" selected>nadie</option>
         <option value="OTRO">OTRO</option>
       </select>
       <input type="text" name="COMUNICARSE CON" placeholder="Especificar contacto" style="display:none;">
     </label>
 
-    <!-- INTÉRPRETE AHORA AQUÍ -->
+    <!-- INTÉRPRETE -->
     <label>INTÉRPRETE:
       <select name="INTERPRETE_OPCION">
         <option value="NO" selected>NO</option>
@@ -153,15 +153,16 @@
     function showMessage(msg) { document.getElementById("message").innerText = msg; }
     function escapeRegExp(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
 
-    // Plantillas actualizadas
+    // Plantillas (these documents can only be used in code execution)
     const ODT_TEMPLATES = {
-      amarillas:       { file: "Plantilla_amarillas.odt" },
-      azules:          { file: "Plantilla_azules.odt" },
-      fax:             { file: "Plantilla_fax.odt" },
-      derechos_ingles: { file: "Plantilla_derechos_ingles.odt" },
-      derechos_espanol:{ file: "Plantilla_derechos_espanol.odt" }
+      amarillas:        { file: "Plantilla_amarillas.odt" },
+      azules:           { file: "Plantilla_azules.odt" },
+      fax:              { file: "Plantilla_fax.odt" },
+      derechos_ingles:  { file: "Plantilla_derechos_ingles.odt" },
+      derechos_espanol: { file: "Plantilla_derechos_espanol.odt" }
     };
 
+    // Reemplazo de placeholders en ODT
     async function generarODTBlob(data, odtFileName) {
       const resp = await fetch(odtFileName);
       if (!resp.ok) throw new Error("No se pudo cargar " + odtFileName);
@@ -170,7 +171,7 @@
 
       let contentXml = await odtZip.file("content.xml").async("string");
 
-      // Sustituciones {{CAMPO}} y {{ CAMPO }}
+      // Sustituciones para {{CAMPO}} y {{ CAMPO }} (incluye Nº INSTRUCTOR)
       for (const k in data) {
         const valor = data[k] ?? "";
         const reExact = new RegExp(`{{${escapeRegExp(k)}}}`, "g");
@@ -178,7 +179,7 @@
         contentXml = contentXml.replace(reExact, valor).replace(reSpaces, valor);
       }
 
-      // Limpieza de placeholders no usados
+      // Limpieza de cualquier placeholder que haya quedado sin sustituir
       contentXml = contentXml.replace(/{{\s*[^}]+\s*}}/g, "");
 
       odtZip.file("content.xml", contentXml);
@@ -192,47 +193,58 @@
       const formData = new FormData(e.target);
       const data = {};
 
-      // Campos especiales (OTRO)
+      // TIPO DOCUMENTO
       const tipoDoc = formData.get("TIPO DOCUMENTO_OPCION") === "OTRO" ? formData.get("TIPO DOCUMENTO") : formData.get("TIPO DOCUMENTO_OPCION");
       data["TIPO DOCUMENTO"] = (tipoDoc || "INDOCUMENTADO/A").toUpperCase();
+
+      // SEXO
       data["SEXO"] = (formData.get("SEXO_OPCION") || "MASCULINO").toUpperCase();
 
+      // DOMICILIO
       const domicilio = formData.get("DOMICILIO_OPCION") === "OTRO" ? formData.get("DOMICILIO") : formData.get("DOMICILIO_OPCION");
       data["DOMICILIO"] = (domicilio || "NO APORTA").toUpperCase();
 
+      // TELÉFONO
       const tel = formData.get("TELÉFONO_OPCION") === "OTRO" ? formData.get("TELÉFONO") : formData.get("TELÉFONO_OPCION");
       data["TELÉFONO"] = (tel || "NO APORTA").toUpperCase();
 
+      // ABOGADO
       const abo = formData.get("ABOGADO_OPCION") === "OTRO" ? formData.get("ABOGADO") : formData.get("ABOGADO_OPCION");
       data["ABOGADO"] = (abo || "DE OFICIO").toUpperCase();
 
+      // COMUNICARSE CON → mantener "nadie" en minúsculas si es la opción por defecto
       const com = formData.get("COMUNICARSE CON_OPCION") === "OTRO" ? formData.get("COMUNICARSE CON") : formData.get("COMUNICARSE CON_OPCION");
-      data["COMUNICARSE CON:"] = (com || "NADIE").toUpperCase();
+      data["COMUNICARSE CON:"] = (com || "nadie"); // sin .toUpperCase()
 
+      // INTÉRPRETE → mapear a {{IDIOMA}} en plantillas
       const interpreteSel = formData.get("INTERPRETE_OPCION");
       const interpreteOtro = formData.get("INTERPRETE");
-      data["INTERPRETE"] = (interpreteSel === "OTRO" && interpreteOtro) ? interpreteOtro.toUpperCase() : "NO";
+      data["IDIOMA"] = (interpreteSel === "OTRO" && interpreteOtro) ? interpreteOtro : ""; // vacío si NO
 
+      // OTROS DERECHOS
       const otros = [];
       document.querySelectorAll('input[name="OTROS DERECHOS"]:checked').forEach(cb => otros.push(cb.value));
       data["OTROS DERECHOS"] = otros.length ? otros.map(v => v.toUpperCase()).join(", ") : "NINGUNO";
 
-      // Resto de campos normales → mayúsculas
+      // Resto de campos → valores en MAYÚSCULAS, claves intactas
       formData.forEach((value, key) => {
-        if (value && value.trim() !== "" && !key.includes("_OPCION") &&
-            !["TIPO DOCUMENTO","DOMICILIO","TELÉFONO","ABOGADO","COMUNICARSE CON","INTERPRETE","OTROS DERECHOS"].includes(key)) {
+        if (
+          value && value.trim() !== "" &&
+          !key.includes("_OPCION") &&
+          !["TIPO DOCUMENTO","DOMICILIO","TELÉFONO","ABOGADO","COMUNICARSE CON","INTERPRETE","OTROS DERECHOS"].includes(key)
+        ) {
           data[key] = value.toUpperCase();
         }
       });
 
-      // Excel
+      // Excel (incluye "Nº INSTRUCTOR" exactamente)
       const headers = [
         "TIPO DOCUMENTO","NºDOCUMENTO","SEXO","Nombre","APELLIDOS","Nombre de los Padres",
         "FECHA DE NACIMIENTO","LUGAR DE NACIMIENTO","NACIONALIDAD","DOMICILIO","TELÉFONO",
         "DELITO","C.P. AGENTES","DILIGENCIAS","Nº INSTRUCTOR",
         "LUGAR DEL HECHO","LUGAR DE LA DETENCIÓN",
         "HORA DEL HECHO","HORA DE LA DETENCIÓN","BREVE RESUMEN DE LOS HECHOS",
-        "INDICIOS POR LOS QUE SE DETIENE","ABOGADO","COMUNICARSE CON:","OTROS DERECHOS","INTERPRETE"
+        "INDICIOS POR LOS QUE SE DETIENE","ABOGADO","COMUNICARSE CON:","OTROS DERECHOS","IDIOMA"
       ];
       const row = {}; headers.forEach(h => row[h] = data[h] || "");
       const ws = XLSX.utils.json_to_sheet([row], { header: headers });
@@ -255,7 +267,7 @@
         }
       }));
 
-      // Generar ZIP
+      // Generar ZIP sin cifrar
       try {
         const z = new JSZip();
         z.file("DETENIDO.xlsx", excelBlob);
